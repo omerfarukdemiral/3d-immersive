@@ -1,0 +1,1709 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>3D Immersive Rehberi</title>
+<meta name="description" content="Scroll ile akan, tek sahneli bir 3D web sitesini kendi ürünün için kurmak: strateji, promptlar, Three.js trick'leri.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="3D Immersive Rehberi">
+<meta property="og:description" content="Tek sahne, tek nesne, scroll ile akan bir gün. Açık kaynak; strateji, promptlar ve trick'ler.">
+<meta property="og:image" content="https://omerfarukdemiral.github.io/3d-immersive/guide/img/prolog.jpg">
+<meta property="og:url" content="https://omerfarukdemiral.github.io/3d-immersive/guide/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Düzen: siyah zemin, üstte sabit sekme şeridi, tek okuma sütunu (~68ch). */
+:root {
+  --zemin: #000;
+  --yazi: #fff;
+  --soluk: #9b9b9b;
+  --cizgi: #262626;
+  --kod-zemin: #111;
+  --sinyal: #e0472a;
+  --baslik: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --metin: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+html { scroll-padding-top: 72px; }
+body {
+  background: var(--zemin);
+  color: var(--yazi);
+  font: 400 18px/1.65 var(--metin);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration-color: var(--soluk); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--yazi); }
+:focus-visible { outline: 2px solid var(--sinyal); outline-offset: 3px; }
+
+/* Sekmeler */
+.ust {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--zemin);
+  border-bottom: 1px solid var(--cizgi);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.ust nav {
+  max-width: 1080px; margin: 0 auto;
+  display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none;
+}
+.ust nav::-webkit-scrollbar { display: none; }
+.ust a {
+  flex: none;
+  font: 500 13px/1 var(--baslik);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  text-decoration: none; color: var(--soluk);
+  padding: 22px 12px 19px;
+  border-bottom: 2px solid transparent;
+}
+.ust a span { font-family: var(--mono); font-size: 11px; margin-right: 6px; }
+.ust a:hover { color: var(--yazi); }
+.ust a[aria-current="page"] { color: var(--yazi); border-bottom-color: var(--sinyal); }
+
+main {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 56px 120px;
+}
+.sayfa { max-width: 68ch; margin: 0 auto; }
+.sayfa.genis { max-width: 1080px; }
+.okuma { max-width: 68ch; margin: 0 auto; }
+
+/* Tipografi */
+h1, h2, h3, h4 { font-family: var(--baslik); text-wrap: balance; line-height: 1.08; }
+h1 {
+  font-size: clamp(40px, 7vw, 76px); font-weight: 800; font-stretch: 72%;
+  letter-spacing: -0.01em; margin: 0 0 20px;
+}
+h2 {
+  font-size: clamp(26px, 3.6vw, 34px); font-weight: 750; font-stretch: 78%;
+  margin: 64px 0 16px; padding-top: 24px; border-top: 1px solid var(--cizgi);
+}
+h3 { font-size: 21px; font-weight: 700; font-stretch: 88%; margin: 40px 0 10px; }
+h4 { font-size: 17px; font-weight: 700; margin: 28px 0 8px; }
+p, ul, ol { margin: 0 0 18px; }
+li { margin-bottom: 6px; }
+li::marker { color: var(--soluk); }
+strong { font-weight: 600; }
+hr { border: 0; border-top: 1px solid var(--cizgi); margin: 48px 0; }
+hr + h2 { border-top: 0; padding-top: 0; }
+blockquote {
+  margin: 24px 0; padding: 4px 0 4px 20px;
+  border-left: 2px solid var(--sinyal); color: #d6d6d6;
+}
+blockquote p:last-child { margin-bottom: 0; }
+
+code {
+  font: 400 0.84em/1.5 var(--mono);
+  background: var(--kod-zemin); border: 1px solid var(--cizgi);
+  padding: 1px 5px; border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+pre {
+  background: var(--kod-zemin); border: 1px solid var(--cizgi);
+  border-radius: 4px; padding: 16px 18px; margin: 0 0 22px;
+  overflow-x: auto; max-width: 100%;
+}
+pre code {
+  background: none; border: 0; padding: 0;
+  font-size: 13.5px; line-height: 1.6; overflow-wrap: normal; white-space: pre;
+}
+.tablo { overflow-x: auto; margin: 0 0 24px; }
+table { border-collapse: collapse; width: 100%; font-size: 15.5px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--cizgi); }
+th {
+  font: 600 12px/1.3 var(--baslik); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--soluk);
+}
+td:first-child { font-variant-numeric: tabular-nums; }
+
+/* Doküman başlığı */
+.etiket {
+  font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--soluk); margin: 0 0 18px;
+}
+.dosya-bas { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; margin-bottom: 8px; }
+.dosya-bas a { font: 500 13px/1 var(--baslik); color: var(--soluk); }
+
+/* Özet */
+.giris { max-width: 68ch; }
+.giris .alt { font-size: 21px; line-height: 1.5; color: #e6e6e6; margin-bottom: 24px; }
+.baglar { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 8px; }
+.baglar a {
+  font: 600 13px/1 var(--baslik); letter-spacing: 0.04em; text-transform: uppercase;
+  text-decoration: none; padding: 12px 16px; border: 1px solid var(--yazi); border-radius: 999px;
+}
+.baglar a.dolu { background: var(--yazi); color: var(--zemin); }
+.baglar a:hover { border-color: var(--sinyal); }
+
+.saatler {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 12px;
+  margin: 48px 0 8px;
+}
+@media (min-width: 760px) { .saatler { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.saatler figure { margin: 0; min-width: 0; }
+.saatler figure.ilk { grid-column: 1 / -1; }
+.saatler img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 3px; }
+.saatler figcaption {
+  display: flex; gap: 10px; align-items: baseline;
+  font: 400 12px/1.3 var(--baslik); color: var(--soluk); padding-top: 8px;
+}
+.saatler figcaption b { font: 500 13px/1 var(--mono); color: var(--yazi); }
+
+.akis {
+  font: 400 14px/1.7 var(--mono); color: #e6e6e6;
+  background: var(--kod-zemin); border: 1px solid var(--cizgi); border-radius: 4px;
+  padding: 18px 20px; overflow-x: auto; white-space: pre; margin: 0 0 22px;
+}
+.akis i { font-style: normal; color: var(--sinyal); }
+
+.adimlar { list-style: none; padding: 0; margin: 0 0 24px; counter-reset: adim; }
+.adimlar li {
+  counter-increment: adim;
+  display: grid; grid-template-columns: 36px 1fr; gap: 0 12px;
+  padding: 14px 0; border-bottom: 1px solid var(--cizgi); margin: 0;
+}
+.adimlar li::before {
+  content: counter(adim, decimal-leading-zero);
+  font: 500 13px/1.9 var(--mono); color: var(--soluk);
+}
+.adimlar b { font-family: var(--baslik); font-weight: 650; font-size: 17px; }
+.adimlar .ref { font: 500 12px/1 var(--mono); color: var(--soluk); white-space: nowrap; }
+.adimlar .ref a { color: var(--soluk); }
+
+.dosyalar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; margin: 8px 0 0; }
+@media (max-width: 640px) { .dosyalar { grid-template-columns: 1fr; } }
+.dosyalar a {
+  display: block; text-decoration: none; padding: 18px 0;
+  border-top: 1px solid var(--cizgi);
+}
+.dosyalar a:hover b { text-decoration: underline; text-decoration-color: var(--sinyal); }
+.dosyalar span { display: block; font: 500 12px/1 var(--mono); color: var(--soluk); margin-bottom: 8px; }
+.dosyalar b { display: block; font: 700 20px/1.2 var(--baslik); font-stretch: 85%; margin-bottom: 6px; }
+.dosyalar p { margin: 0; font-size: 15.5px; color: #cfcfcf; }
+
+.sutun2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; }
+@media (max-width: 760px) { .sutun2 { grid-template-columns: 1fr; } }
+.sutun2 > div { min-width: 0; }
+.sutun2 h3 { margin-top: 8px; }
+
+footer.son { max-width: 68ch; margin: 80px auto 0; color: var(--soluk); font-size: 14px; }
+
+@media (max-width: 600px) {
+  body { font-size: 17px; }
+  main { padding-block: 36px 96px; }
+  .ust a { padding: 18px 10px 15px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header class="ust">
+  <nav aria-label="Dokümanlar">
+    <a href="#ozet" data-sekme="ozet">Özet</a>
+    <a href="#strateji" data-sekme="strateji"><span>01</span>Strateji</a>
+    <a href="#promptlar" data-sekme="promptlar"><span>02</span>Promptlar</a>
+    <a href="#tricks" data-sekme="tricks"><span>03</span>Trick'ler</a>
+    <a href="#sayfa-api" data-sekme="sayfa-api"><span>04</span>Sayfa API'si</a>
+  </nav>
+</header>
+
+<main>
+  <section id="ozet" class="sayfa genis" data-bolum>
+    <div class="giris">
+      <p class="etiket"><span lang="en">3d-immersive</span> · açık kaynak · MIT</p>
+      <h1>Tek sahne. Tek nesne. Scroll ile akan bir gün.</h1>
+      <p class="alt">Bu rehber, repodaki dört dokümanın okunabilir hâli. Amacı şu: aynı yapıyla, kendi ürününle, kendi 3D immersive siteni kurabilmen.</p>
+      <div class="baglar">
+        <a class="dolu" href="../">Canlı demo</a>
+        <a href="https://github.com/omerfarukdemiral/3d-immersive">GitHub reposu</a>
+      </div>
+    </div>
+
+    <div class="saatler">
+      <figure class="ilk"><img src="img/prolog.jpg" alt="Açılış: şafakta tek türbin, solda başlık" width="1600" height="1000"><figcaption><b>06:25</b> Açılış</figcaption></figure>
+      <figure><img src="img/anatomie.jpg" alt="Kamera gondolun yanında, şanzıman kırmızıyla vurgulu" width="1600" height="1000" loading="lazy"><figcaption><b>13:01</b> Türbinin içi</figcaption></figure>
+      <figure><img src="img/netz.jpg" alt="Batarya deposu ve güneş parkı, elektrik direkleri" width="1600" height="1000" loading="lazy"><figcaption><b>17:40</b> Santraller</figcaption></figure>
+      <figure><img src="img/nacht.jpg" alt="Gece, lacivert zemin ızgarası ve türbin silueti" width="1600" height="1000" loading="lazy"><figcaption><b>03:11</b> Gece</figcaption></figure>
+      <figure><img src="img/repowering.jpg" alt="Ertesi sabah, büyümüş türbin" width="1600" height="1000" loading="lazy"><figcaption><b>06:20</b> Repowering</figcaption></figure>
+    </div>
+
+    <div class="okuma" style="margin-left:0">
+      <h2>Fikir</h2>
+      <p>Sahnede tek bir nesne durur, kamera onun etrafında dolaşır, metin bölüm bölüm akar. Bu demoda nesne bir rüzgâr türbini, scroll ise türbinin bir günü. Her bölüm günün bir saatine denk geliyor; gökyüzü, ışık ve sis o saatten hesaplanıyor.</p>
+      <p>Gün fikri süs değil. Her bölüm sahnede bir şeyi değiştiriyor: ya ışığı, ya kamera açısını, ya da ölçeği. Sahnede hiçbir şey değiştirmeyen bölüm alt sayfaya taşınıyor.</p>
+
+      <h2>Scroll-driven nasıl çalışıyor</h2>
+      <p>Bütün site tek bir sayıya bağlı: anlatı zamanı <code>T</code>. Tam kısmı bölümün sırası, kesirli kısmı bölüm içinde ne kadar ilerlendiği.</p>
+<div class="akis">scrollY ─(Lenis)─▶ <i>T</i> ─▶ saat → gökyüzü, ışık, sis
+                     ├─▶ kamera konumu
+                     ├─▶ sahne durumu (rotor, santraller, filo)
+                     └─▶ metin blokları (opacity, translate)</div>
+      <ul>
+        <li>Her bölüm ekranın birkaç katı yüksekliğinde bir kutu, içinde <code>position: sticky</code> bir sahne. Okurken sahne sabit kalıyor, son ekran yüksekliğinde sıradaki bölüm içeri kayıyor.</li>
+        <li>Metin blokları <code>data-takt="0.22 0.44"</code> ile işaretli: bölümün %22'sinde girer, %44'ünde çıkar. Kamera keyframe'leri de aynı birimle yazılıyor, metin ve kamera bu yüzden kendiliğinden senkron.</li>
+        <li>Keyframe'ler <code>[T, değer]</code> çiftleri; aralarında monoton kübik interpolasyon var. Kamera hedefi aşıp geri dönmüyor, keyframe'lerde durup kalkmıyor.</li>
+        <li>Kamera okurken duruyor, bölümler arasında uçuyor.</li>
+        <li>Scroll, Lenis ve metin tek bir <code>requestAnimationFrame</code> döngüsünde. 3D sahne aynı ortak durumu okuyor. React bu döngüde render etmiyor.</li>
+      </ul>
+      <p>Bir sayfanın bütün koreografisi tek dosyada duruyor: <code>partitur.ts</code>. Yeni bölüm eklemek veri değişikliği; shader'a dokunmuyorsun.</p>
+    </div>
+
+    <div class="sutun2">
+      <div>
+        <h2>Teknik taraf</h2>
+        <ul>
+          <li><strong>Next.js 16</strong>, static export. GitHub Pages ya da herhangi bir statik host.</li>
+          <li><strong>three.js + React Three Fiber.</strong> GSAP ve ScrollTrigger yok.</li>
+          <li><strong>Model dosyası yok.</strong> Türbin kanadı loft edilmiş yüzey, santraller birleştirilmiş geometri, direkler tek <code>InstancedMesh</code>, kablolar tek <code>LineSegments</code>.</li>
+          <li><strong>Metin HTML'de.</strong> SEO ve ekran okuyucu her cümleyi görür. WebGL yoksa gradyan gökyüzü kalır.</li>
+          <li><strong>Erişilebilirlik:</strong> <code>prefers-reduced-motion</code> açıksa yumuşatma kapanır.</li>
+          <li><strong>Ölçerek ilerle:</strong> fps, kamera hızı ve ekrandaki geri kayma headless tarayıcıyla ölçülüyor.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Art direction</h2>
+        <ul>
+          <li><strong>Renk saatten gelir.</strong> Şafak, akşam ve gece sahneleri öğlen ışığından daha çok şey söylüyor. Soluk, beyaz öğle sahnelerini azalt.</li>
+          <li><strong>Gerçekçi değil, maket.</strong> Açık, sıcak yüzeyler ve her nesnede tek bir vurgu rengi. Vurgu, metnin anlattığı parçayı işaret ediyor.</li>
+          <li><strong>Tipografi tek aile.</strong> Başlıklar dar ve ağır, etiketler küçük ve aralıklı. Altta sabit bir HUD sahnenin kendi ölçülerini gösteriyor: saat, rotor devri, bölüm.</li>
+          <li><strong>Hareket bir şey anlatır ya da yoktur.</strong> Zıplama, keyfi zoom, geri scroll'da kaybolan efekt yok.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="okuma" style="margin-left:0">
+      <h2>Kendi siteni kurmak</h2>
+      <p>Her adımdan sonra dur ve sonucu kontrol et. AI ile çalışırken en sık hata, onay vermediğin kararların kodun içinde sessizce verilmesi.</p>
+      <ol class="adimlar">
+        <li><div><b>Ekseni bul.</b> İçeriğinden çıkan bir zaman ya da yolculuk seç: bir gün, bir ürünün ömrü, bir üretim hattı. <span class="ref"><a href="#strateji">01</a></span></div></li>
+        <li><div><b>Partisyonu yaz, kod yazma.</b> Her bölüm için saat, yükseklik, metin blokları ve kamera. <span class="ref"><a href="#promptlar">02 · Faz 1</a></span></div></li>
+        <li><div><b>İskeleti kur.</b> Sticky bölümler, akan <code>T</code>, boş sahne. <span class="ref"><a href="#promptlar">02 · Faz 2</a></span></div></li>
+        <li><div><b>Nesneni üret.</b> Prosedürel ya da kendi modelin; her parça ayrı animasyonlanabilsin. <span class="ref"><a href="#promptlar">02</a> · <a href="#tricks">03</a></span></div></li>
+        <li><div><b>Koreografiyi yaz.</b> Kamera, ışık ve sahne durumları <code>partitur.ts</code>'e. <span class="ref"><a href="#tricks">03</a></span></div></li>
+        <li><div><b>Cilala ve ölç.</b> Dikey ekran, reduced-motion, ilk görünümde takılma, kameranın git-gel yapması. <span class="ref"><a href="#tricks">03</a></span></div></li>
+        <li><div><b>Alt sayfaları ekle.</b> Aynı sahne, sayfa başına kendi partisyonu. <span class="ref"><a href="#sayfa-api">04</a></span></div></li>
+      </ol>
+      <p>Repoyu doğrudan forklamak daha hızlı:</p>
+<pre><code>git clone https://github.com/omerfarukdemiral/3d-immersive
+cd 3d-immersive
+npm install
+npm run dev</code></pre>
+      <p>Firma bilgileri <code>src/content/site.ts</code>'te, ana sayfa metni <code>src/app/(site)/_start/Kapitelfolge.tsx</code>'te, koreografi <code>src/app/(site)/_start/partitur.ts</code>'te.</p>
+
+      <h2>Dokümanlar</h2>
+    </div>
+    <div class="dosyalar">
+      <a href="#strateji"><span>01-strateji.md</span><b>Strateji</b><p>Fikir, mimari ve neden böyle kurulduğu.</p></a>
+      <a href="#promptlar"><span>02-promptlar.md</span><b>Promptlar</b><p>Faz faz Claude Code promptları ve prosedürel model promptları.</p></a>
+      <a href="#tricks"><span>03-tricks.md</span><b>Trick'ler</b><p>40 Three.js, scroll ve performans çözümü; her biri dosya adıyla.</p></a>
+      <a href="#sayfa-api"><span>04-sayfa-api.md</span><b>Sayfa API'si</b><p>Aynı sahneye yeni bir alt sayfa eklemek.</p></a>
+    </div>
+  </section>
+
+  <article id="strateji" class="sayfa" data-bolum hidden>
+    <div class="dosya-bas"><p class="etiket" lang="en">docs/01-strateji.md</p><a href="https://github.com/omerfarukdemiral/3d-immersive/blob/main/docs/01-strateji.md">GitHub'da aç</a></div>
+<h1 id="strateji-01-strateji-bir-sahne-bir-gun">01 · Strateji — &quot;Bir sahne, bir gün&quot;</h1>
+<p>Bu doküman, sitenin <strong>neden böyle kurulduğunu</strong> anlatır. Kod ayrıntıları
+<a href="#tricks"><code>03-tricks.md</code></a>&#39;de, kullandığımız promptlar <a href="#promptlar"><code>02-promptlar.md</code></a>&#39;de.</p>
+<hr>
+<h2 id="strateji-1-fikir-tek-nesne-sabit-sahne-akan-metin">1. Fikir: tek nesne, sabit sahne, akan metin</h2>
+<p>Referans: oryzo.ai mantığı. Sahnede <strong>tek bir nesne</strong> durur, kamera onun
+etrafında dolaşır, metin bölüm bölüm akar. Bizde nesne bir rüzgâr türbini,
+scroll ise <strong>bu türbinin bir günü</strong>: sabah 06:25 → öğle → akşam → gece
+03:10 → ertesi sabah.</p>
+<p>Gün fikri süs değil, içerikten çıkıyor:</p>
+<div class="tablo"><table>
+<thead>
+<tr>
+<th>Saat</th>
+<th>Bölüm</th>
+<th>Sahnede ne oluyor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>06:25</td>
+<td>Giriş</td>
+<td>Şafak, tek türbin, rotor yavaş</td>
+</tr>
+<tr>
+<td>13:00</td>
+<td>Anatomie</td>
+<td>Kamera gondolun içine girer, kabuk saydamlaşır, 5 parça</td>
+</tr>
+<tr>
+<td>15:20</td>
+<td>Leistungen</td>
+<td>4 hizmet = türbinin etrafında ~95°&#39;lik bir yay üzerinde 4 bakış açısı</td>
+</tr>
+<tr>
+<td>17:40</td>
+<td>Netz</td>
+<td>5 santral sırayla yerden yükselir; direkler ve kablolar scroll&#39;la uzar, kamera düz bir rayda yakından geçer</td>
+</tr>
+<tr>
+<td>18:30</td>
+<td>Ankauf</td>
+<td>Gün batımı, zaman çizelgesi</td>
+</tr>
+<tr>
+<td>03:10</td>
+<td>Monitoring</td>
+<td>Gece, ikaz feneri yanıp söner, sensörler mavi</td>
+</tr>
+<tr>
+<td>06:20</td>
+<td>Repowering</td>
+<td>Türbin 60 m&#39;den 120 m&#39;ye büyür</td>
+</tr>
+<tr>
+<td>07:00</td>
+<td>Kontakt</td>
+<td>Kamera uzaklaşır, 140 türbinlik filo belirir</td>
+</tr>
+</tbody></table></div>
+<p>İlk sürümde 12 bölüm vardı (52 ekran yüksekliği). Metin ağırlıklı ve
+3D&#39;de bir şey değiştirmeyen bölümler alt sayfalara gitti. Kalan 8 bölümün
+her biri ya ışığı/rengi (saat), ya açıyı, ya da ölçeği değiştiriyor.
+Santral bölümü ilk sürümde 09:20&#39;deydi ve öğlen ışığında &quot;beyaz&quot;
+kalıyordu; şimdi 17:40&#39;ın sıcak ışığında, daha sık dizili ve daha az
+direkle. Renkler gerçekçi değil; bir mimari maket gibi açık ve sıcak
+yüzeyler, her santralde tek bir vurgu rengi var.</p>
+<p><strong>Kural:</strong> Hareket bir şey anlatır ya da yoktur. Zıplama, keyfi zoom,
+geri scroll&#39;da kaybolan efekt yok.</p>
+<h2 id="strateji-2-tek-kaynak-anlati-zamani-t">2. Tek kaynak: anlatı zamanı <code>T</code></h2>
+<p>Bütün site tek bir sayıya bağlı:</p>
+<pre><code>scrollY ──(yumuşatma)──▶ T ──▶ saat, gökyüzü, ışık, sis
+                           ├──▶ kamera konumu
+                           ├──▶ sahne durumu (rotor, filo, santraller…)
+                           └──▶ metin blokları (opacity / translate)
+</code></pre>
+<ul>
+<li><code>T</code>&#39;nin tam sayı kısmı = bölüm indeksi, kesirli kısmı = bölüm içindeki yol.</li>
+<li>Her şey <code>T</code> üzerinde <strong>destek noktaları</strong> (keyframe) olarak yazılır:
+<code>[T, değer]</code> çiftleri, aralarında smootherstep.</li>
+<li>Bir sayfanın bütün koreografisi <strong>tek dosyada</strong>: <code>partitur.ts</code>
+(&quot;partisyon&quot;). Kamera, rotor devri, filo, santraller, gökyüzü — hepsi
+orada. Sahne kodu sayfayı tanımıyor, sadece partisyonu çalıyor.</li>
+</ul>
+<p>Bu ayrım projenin en önemli kararı: koreografi değişikliği = veri
+değişikliği. Yeni bir bölüm eklemek için shader&#39;a dokunmuyorsun.</p>
+<h2 id="strateji-3-sticky-bolumler-taktlar">3. Sticky bölümler + takt&#39;lar</h2>
+<p>Her bölüm <code>hoehe</code> kadar ekran yüksekliğinde (ör. 4.6 vh) bir kutu; içinde
+<code>position: sticky</code> bir sahne. Sahne kutunun <code>1 - 1/hoehe</code> kadarında
+&quot;sabit&quot; durur, son bir ekran yüksekliğinde sıradaki bölüm içeri kayar.
+<strong>Kamera geçişleri tam bu kayma aralığına</strong> denk gelir — okurken kamera
+durur, geçerken uçar.</p>
+<p>Bölüm içindeki metin blokları <code>data-takt=&quot;0.22 0.44&quot;</code> ile işaretli:
+sabit sahnenin %22&#39;sinde girer, %44&#39;ünde çıkar. Kamera keyframe&#39;leri de
+aynı birimle yazılır (<code>tAus(&quot;lage&quot;, 0.22)</code>), böylece metin ve kamera
+kendiliğinden senkron kalır.</p>
+<h2 id="strateji-4-metin-domda-3d-sadece-zugabe">4. Metin DOM&#39;da, 3D sadece &quot;zugabe&quot;</h2>
+<ul>
+<li>Bütün metin SSR ile HTML&#39;de. SEO ve ekran okuyucu her cümleyi alır.</li>
+<li>3D sahne <code>next/dynamic</code> + <code>ssr: false</code>. WebGL yoksa CSS gradyan
+gökyüzü kalır, metin eksiksiz akar.</li>
+<li>Döngü sadece <code>style</code> yazar, içerik silmez.</li>
+<li><code>prefers-reduced-motion</code>: yumuşatma ve kaydırma ofsetleri kapanır.</li>
+</ul>
+<h2 id="strateji-5-model-indirmeden-3d">5. Model indirmeden 3D</h2>
+<p>Hiç GLTF yok. Türbin, 5 santral ve elektrik direkleri <strong>prosedürel</strong>:</p>
+<ul>
+<li>Türbin: kanat loft edilmiş yüzey (chord + kalınlık + twist aynı anda
+değişiyor — basit konik kutu hemen &quot;placeholder&quot; görünür).</li>
+<li>Santraller: kutu, silindir, küre parçası ve türbin parçalarının
+birleşimi (<code>mergeGeometries</code>).</li>
+<li>Elektrik direkleri: 4 ana dikme + kuşaklar + çapraz bağlantılar +
+2 travers, tek geometri; tüm direkler tek <code>InstancedMesh</code>.</li>
+<li>Kablolar: tek <code>LineSegments</code>, <code>setDrawRange</code> ile scroll&#39;a göre uzar.</li>
+</ul>
+<p>Sonuç: model indirme 0 MB, her parça ayrı animasyonlanabilir.</p>
+<h2 id="strateji-6-bagimlilik-disiplini">6. Bağımlılık disiplini</h2>
+<p>GSAP yok, ScrollTrigger yok. Tek <code>requestAnimationFrame</code> döngüsü;
+smooth scroll için Lenis var ama <strong>kendi rAF&#39;i kapalı</strong>, aynı döngünün
+başında sürülüyor (ilk sürümde Lenis yoktu ve mouse tekerleğinde metin
+ile sahne kopuyordu — bkz. <a href="#tricks"><code>03-tricks.md</code></a> #1). React bu döngüde
+<strong>render etmez</strong>;
+paylaşılan durum düz bir mutable obje (<code>lauf</code>). 60 fps&#39;te React state
+güncellemek tam israf.</p>
+<h2 id="strateji-7-asamali-calisma-phase-gated">7. Aşamalı çalışma (phase-gated)</h2>
+<p>Projeyi tek promptta değil, her fazdan sonra <strong>durup onay alarak</strong>
+yürüttük:</p>
+<ol start="0">
+<li>Keşif — mevcut kod, içerik, kısıtlar</li>
+<li>Partisyon dokümanı — hangi saat, hangi bölüm, kamera nerede (kod yok)</li>
+<li>İskelet — sticky bölümler, boş sahne, <code>T</code> akıyor</li>
+<li>Koreografi — kamera, ışık, sahne durumları</li>
+<li>Cilalama — dikey ekran, reduced-motion, WebGL kaybı, performans</li>
+</ol>
+<p>Bu sıralama, AI ile çalışırken &quot;güzel ama dağınık&quot; sonuçtan kaçınmanın
+yolu. Promptlar <a href="#promptlar"><code>02-promptlar.md</code></a>&#39;de.</p>
+  </article>
+
+  <article id="promptlar" class="sayfa" data-bolum hidden>
+    <div class="dosya-bas"><p class="etiket" lang="en">docs/02-promptlar.md</p><a href="https://github.com/omerfarukdemiral/3d-immersive/blob/main/docs/02-promptlar.md">GitHub'da aç</a></div>
+<h1 id="promptlar-02-ornek-promptlar">02 · Örnek promptlar</h1>
+<p>Bu sitenin yapımında kullandığımız prompt yapısının sadeleştirilmiş hâli.
+Hepsi Claude Code ile, mevcut bir Next.js projesinin içinde çalıştırıldı.
+Köşeli parantezleri kendi projenle doldur.</p>
+<blockquote>
+<p><strong>Ana fikir:</strong> Tek dev prompt yerine faz faz ilerle ve her fazdan sonra
+<strong>dur, onay iste</strong> de. AI&#39;ın en sık hatası, onay vermediğin kararları
+kod içinde sessizce vermesi.</p>
+</blockquote>
+<hr>
+<h2 id="promptlar-faz-0-kesif">Faz 0 — Keşif</h2>
+<pre><code class="language-text">Bu repo [sektör] alanında bir firmanın sitesi. Ana sayfayı scroll&#39;a bağlı,
+immersive bir 3D deneyime çevireceğiz. Referans: oryzo.ai (tek nesne,
+sabit sahne, kamera nesnenin etrafında dolaşır, metin bölüm bölüm akar).
+
+Bu fazda KOD YAZMA. Şunları çıkar:
+1. Mevcut içerik: hangi bölümler, hangi sayılar, hangi CTA&#39;lar var?
+2. Mevcut 3D/animasyon altyapısı (three, R3F, sticky pattern var mı?)
+3. İçerikten çıkan, süs olmayan bir &quot;hikâye ekseni&quot; önerisi
+   (ör. bir günün saatleri, bir ürünün yaşam döngüsü, bir yolculuk).
+4. Riskler: performans, mobil, erişilebilirlik, SEO.
+
+Bitince dur ve onayımı bekle.
+</code></pre>
+<h2 id="promptlar-faz-1-partisyon-sadece-dokuman">Faz 1 — Partisyon (sadece doküman)</h2>
+<pre><code class="language-text">Onaylanan eksen: &quot;[Bir türbin, bir gün]&quot;. docs/partitur.md dosyasını yaz:
+
+- Her bölüm için: saat, bölüm yüksekliği (viewport cinsinden), metin
+  blokları ve hangi aralıkta görünür oldukları (0–1),
+  kamera konumu + bakış noktası, sahnede ne değişiyor.
+- Her sahne değişikliğinin içerikte bir dayanağı olsun. Dayanağı yoksa
+  o hareketi koyma.
+- Gökyüzü/ışık/sis renklerini saatin fonksiyonu olarak tanımla.
+
+Kod yok. Bitince dur.
+</code></pre>
+<h2 id="promptlar-faz-2-i-skelet">Faz 2 — İskelet</h2>
+<pre><code class="language-text">docs/partitur.md&#39;ye göre iskeleti kur:
+
+- Tek rAF döngüsü: scrollY → exponential smoothing → anlatı zamanı T
+  (tam sayı = bölüm, kesir = bölüm içi yol). GSAP EKLEME.
+  Smooth scroll için Lenis kullan ama autoRaf: false; lenis.raf()&#39;i
+  aynı döngünün başında çağır, sonra scrollY&#39;yi oku. İkinci bir
+  smoothing katmanı EKLEME (metin ile 3D kopar).
+- Keyframe&#39;ler arası monoton kübik (Fritsch–Carlson) interpolasyon;
+  segment başına smootherstep KULLANMA (her keyframe&#39;de durur).
+- Paylaşılan durum için mutable bir modül objesi (`lauf`). React bu
+  döngüde render etmesin, sadece style yazılsın.
+- Her bölüm sticky; içindeki öğeler data-takt=&quot;a b&quot; ile girip çıksın.
+- Metin SSR&#39;da tam olsun. 3D canvas next/dynamic ssr:false.
+  WebGL yoksa CSS gradyan kalsın.
+- Sahnede şimdilik sadece zemin + gökyüzü + tek nesne.
+
+Koreografi yok. Bitince dur.
+</code></pre>
+<h2 id="promptlar-faz-3-koreografi">Faz 3 — Koreografi</h2>
+<pre><code class="language-text">Partisyonu koda dök. Bütün koreografi tek dosyada olsun: partitur.ts.
+
+- Spur tipi: number | [T, değer][] ; aralarında smootherstep.
+- Kamera: [T, {pos, blick, fov, versatz}] — `versatz` görüntüyü yatayda
+  kaydırır (setViewOffset), böylece nesne metnin yanında durur.
+- Kamera geçişleri bölümler arası kayma aralığına düşsün; metin
+  okunurken kamera dursun.
+- Sahne durumu (rotor devri, kabuk opaklığı, filo yüksekliği…) tek bir
+  Szenenzustand objesinde, her alanın bir varsayılanı olsun.
+
+Bitince dur, ekran görüntüleriyle göster.
+</code></pre>
+<h2 id="promptlar-faz-4-cilalama">Faz 4 — Cilalama</h2>
+<pre><code class="language-text">- Dikey ekran: metin altta, nesne üst yarıda; kamerayı oranla geri çek.
+- prefers-reduced-motion: yumuşatma ve kaydırma ofsetleri kapalı.
+- webglcontextlost olursa Canvas&#39;ı yeniden kur.
+- Performans: aynı geometriden çok varsa InstancedMesh, sabit parçalar
+  mergeGeometries ile tek draw call.
+- Her bölümde bir ekran görüntüsü al, metin ile 3D çakışıyor mu bak.
+</code></pre>
+<hr>
+<h2 id="promptlar-prosedurel-model-promptlari">Prosedürel model promptları</h2>
+<h3 id="promptlar-turbin-model-indirmeden">Türbin (model indirmeden)</h3>
+<pre><code class="language-text">GLTF kullanmadan, three.js ile prosedürel bir rüzgâr türbini üret.
+Ölçek 1 birim = 1 m, göbek yüksekliği 60 m, rotor çapı 60 m.
+Kanat basit konik kutu OLMASIN: kesit profili boyunca
+chord (kökten %18&#39;e kadar artıp uca doğru azalan), kalınlık (kökte kalın)
+ve twist (uca doğru düzleşen) aynı anda değişsin — loft edilmiş yüzey.
+Kule konik, gondol, göbek ve spinner ayrı geometriler olsun ki her
+parçayı ayrı animasyonlayabilelim.
+</code></pre>
+<h3 id="promptlar-5-santral-elektrik-hatti">5 santral + elektrik hattı</h3>
+<pre><code class="language-text">Sahneye ana türbinin batısına sıralı 5 santral ekle, hepsi prosedürel:
+rüzgâr parkı (3 türbin), güneş parkı (25° eğimli panel sıraları),
+batarya depolama (konteyner sıraları + klima üniteleri),
+biogaz (3 fermentör + membran kubbe, BHKW, baca),
+trafo merkezi (portal direkler, baralar, 3 trafo).
+
+Santralleri kafes elektrik direkleriyle bağla:
+- Direk: 4 ana dikme, kuşaklar, çapraz bağlantılar, 2 travers — tek
+  geometri, bütün direkler tek InstancedMesh.
+- Kablolar: sarkmalı (parabol), tek LineSegments; geometriyi
+  açıklık → parça → kablo sırasıyla yaz ki setDrawRange ile hattı
+  scroll&#39;a göre uzatabilelim.
+
+Tek bir spur yönetsin: kraftwerke (0–5). i. santral değer i&#39;yi geçince
+yerden yükselsin, değer [i, i+1) aralığındayken zemininde kırmızı bir
+halka yansın ve metindeki karttan ona bir kılavuz çizgisi çekilsin.
+</code></pre>
+<h3 id="promptlar-anonimlestirme-bu-repo-boyle-cikti">Anonimleştirme (bu repo böyle çıktı)</h3>
+<pre><code class="language-text">Bu projeyi markadan arındırarak public paylaşılabilir bir demo kopya
+yap. Sektör kalabilir. Firma adı, kişiler, adres, telefon, e-posta,
+vergi/ticaret sicil no, gerçek proje yerleri, logolar ve müşteri
+fotoğrafları gitsin; yerine açıkça kurgusal (Musterwerk / Max Mustermann
+/ Musterstadt) veriler gelsin. Koddaki yorumlarda da müşteri izi kalmasın.
+En sonda grep ile doğrula.
+</code></pre>
+  </article>
+
+  <article id="tricks" class="sayfa" data-bolum hidden>
+    <div class="dosya-bas"><p class="etiket" lang="en">docs/03-tricks.md</p><a href="https://github.com/omerfarukdemiral/3d-immersive/blob/main/docs/03-tricks.md">GitHub'da aç</a></div>
+<h1 id="tricks-03-trickler-three-js-prosedurel-model-scroll">03 · Trick&#39;ler — Three.js, prosedürel model, scroll</h1>
+<p>Her trick için: <strong>ne</strong>, <strong>neden</strong>, <strong>nerede</strong> (dosya).</p>
+<hr>
+<h2 id="tricks-scroll-ve-zaman">Scroll ve zaman</h2>
+<h3 id="tricks-1-scrollu-yumusat-ama-tek-yerde">1. Scroll&#39;u yumuşat — ama tek yerde</h3>
+<p>İlk sürümde 3D sahne kendi exponential smoothing&#39;ini kullanıyordu,
+sayfa ise native scroll ediyordu. Mouse tekerleği kademeli olduğu için
+metin her tıkta 100 px zıplıyor, sahne arkasından 100 ms geç
+kayıyordu. Ölçümde karelerin %93&#39;ünde sayfa duruyor, sonra tek karede
+sıçrıyordu.</p>
+<p>Çözüm: Lenis, <strong>kendi rAF&#39;i olmadan</strong>, ana döngünün başında:</p>
+<pre><code class="language-ts">const lenis = new Lenis({ autoRaf: false, lerp: 0.085 });
+// her karede:
+lenis.raf(now);          // önce scroll&#39;u ilerlet
+const y = scrollY;       // sonra oku → DOM ve 3D aynı değeri görür
+</code></pre>
+<p>İkinci bir smoothing yok. İki ayrı rAF olsaydı (Lenis&#39;in ve bizimki)
+sıraya göre 1 kare kayma olurdu. Touch&#39;ta Lenis devreye girmez; iOS/Android
+zaten momentumlu scroll ediyor. <code>prefers-reduced-motion</code> → Lenis hiç
+kurulmaz.
+→ <code>src/components/erlebnis/Erlebnis.tsx</code></p>
+<h3 id="tricks-2-her-seyi-tek-sayiya-bagla-t">2. Her şeyi tek sayıya bağla: <code>T</code></h3>
+<p><code>T = bölümIndeksi + bölümİçiİlerleme</code>. Kamera, gökyüzü, rotor, santraller
+hep <code>T</code>&#39;nin fonksiyonu. Geri scroll&#39;da her şey birebir geri sarılır —
+&quot;tetiklenip biten&quot; animasyon yok.
+→ <code>src/components/erlebnis/partitur.ts</code></p>
+<h3 id="tricks-3-keyframe-t-deger-monoton-kubik-spline">3. Keyframe = <code>[T, değer]</code> + monoton kübik spline</h3>
+<p>İlk sürümde her iki keyframe arası ayrı bir smootherstep&#39;ti. Sorun: hız
+<strong>her keyframe&#39;de sıfıra iniyor</strong>, kamera ara noktalardan geçerken
+&quot;dur-kalk&quot; yapıyordu.</p>
+<p>Çözüm: Fritsch–Carlson monoton kübik Hermite.</p>
+<ul>
+<li>Ara noktalardan hız sürekli geçer (C¹).</li>
+<li>Monoton olduğu için asla hedefi aşmaz (overshoot yok — Catmull-Rom&#39;un
+aksine kamera zemine gömülmez).</li>
+<li>İki eşit keyframe = gerçek duruş, yumuşak giriş/çıkışla. Yani &quot;okurken
+dur&quot; davranışı korunur.</li>
+</ul>
+<pre><code class="language-ts">// iç noktada teğet: komşu eğimler zıt işaretliyse 0, değilse
+m = 3*(h0+h1) / ((2*h1+h0)/d0 + (h1+2*h0)/d1);
+</code></pre>
+<p>Kamera konumu, bakış noktası, fov, versatz — her alan ayrı eğri.
+→ <code>src/components/erlebnis/zeitachse.ts</code> (<code>kurve</code>), <code>Szene.tsx</code></p>
+<h3 id="tricks-4-kamera-okurken-durur-gecerken-ucar">4. Kamera okurken durur, geçerken uçar</h3>
+<p>Bölüm <code>hoehe</code> vh yüksekliğinde, sahne <code>1 - 1/hoehe</code> oranında sabit.
+Kamera keyframe&#39;lerini takt&#39;ın ilk %30&#39;una koy, kalanında sabit tut.
+Kullanıcı okurken hiçbir şey kaymaz.
+→ <code>src/app/(site)/_start/partitur.ts</code> (<code>netzKamera</code>)</p>
+<h3 id="tricks-5-reacti-donguden-cikar">5. React&#39;i döngüden çıkar</h3>
+<p>Paylaşılan durum düz bir mutable obje (<code>lauf</code>). rAF döngüsü ve
+R3F <code>useFrame</code> ona yazar/okur, React 60 kez/sn render etmez.
+→ <code>src/components/erlebnis/lauf.ts</code></p>
+<hr>
+<h2 id="tricks-kamera-ve-kompozisyon">Kamera ve kompozisyon</h2>
+<h3 id="tricks-6-setviewoffset-ile-nesneyi-metnin-yanina-it">6. <code>setViewOffset</code> ile nesneyi metnin yanına it</h3>
+<pre><code class="language-ts">cam.setViewOffset(w, h, -versatz * w, hoch * h, w, h);
+</code></pre>
+<p>Kamera hâlâ nesneye bakar, ama görüntü yatayda kayar. Metin solda,
+nesne sağda; perspektif bozulmaz (lookAt&#39;i kaydırmaktan çok daha temiz).
+→ <code>src/components/erlebnis/Szene.tsx</code> (<code>Kamerafuehrung</code>)</p>
+<h3 id="tricks-7-dikey-ekranda-kamerayi-oranla-geri-cek">7. Dikey ekranda kamerayı oranla geri çek</h3>
+<p><code>weg.multiplyScalar((1 + (1/aspekt - 1) * 0.55) * weite)</code> — dar ekranda
+nesne kadraja sığar, <code>hoch</code> ile üst yarıya alınır.</p>
+<h3 id="tricks-8-sayfa-degisiminde-kamera-1-snde-suzulur">8. Sayfa değişiminde kamera 1 sn&#39;de süzülür</h3>
+<p>Son kamera durumu saklanır, yeni sayfanın ilk konumuna scroll&#39;dan
+bağımsız <code>lerp</code> edilir. Sayfalar arası geçiş de tek sahne gibi hissettirir.</p>
+<hr>
+<h2 id="tricks-gokyuzu-ve-isik">Gökyüzü ve ışık</h2>
+<h3 id="tricks-9-saat-gokyuzu-paleti">9. Saat → gökyüzü paleti</h3>
+<p>24 saatlik keyframe listesi (üst, ufuk, zemin, güneş rengi, güneş gücü).
+Gökyüzü küresi basit bir gradient shader; sis rengi = ufuk rengi, böylece
+zemin ufka dikişsiz erir.
+→ <code>zeitachse.ts</code> (<code>himmelUm</code>), <code>Szene.tsx</code> (<code>Himmel</code>)</p>
+<h3 id="tricks-10-zemin-olcu-izgarasi-shaderi">10. Zemin = ölçü ızgarası shader&#39;ı</h3>
+<p><code>fwidth</code> ile anti-aliased 20 m / 100 m ızgara, mesafeyle söner. Boşlukta
+dönen kamera &quot;yüzer&quot;; ızgara harekete referans verir.
+→ <code>Szene.tsx</code> (<code>Boden</code>)</p>
+<h3 id="tricks-11-gece-metni-otomatik-acilir">11. Gece metni otomatik açılır</h3>
+<p><code>istNacht(uhr)</code> → <code>data-nacht</code> attribute → CSS renkleri değişir.</p>
+<hr>
+<h2 id="tricks-prosedurel-model-gltf-yok">Prosedürel model (GLTF yok)</h2>
+<h3 id="tricks-12-kanat-loft">12. Kanat = loft</h3>
+<p>Kesit profili boyunca chord, kalınlık ve twist aynı anda değişir.
+Basit konik kutu hemen &quot;placeholder&quot; görünür; bu üçlü silüeti gerçek yapar.
+→ <code>src/components/three/turbineGeometry.ts</code></p>
+<h3 id="tricks-13-balken-helperi-iki-nokta-arasi-kutu">13. &quot;Balken&quot; helper&#39;ı: iki nokta arası kutu</h3>
+<pre><code class="language-ts">function balken(a, b, d) {
+  const g = new BoxGeometry(d, dist(a, b), d);
+  g.applyQuaternion(fromUnitVectors(UP, normalize(b - a)));
+  g.translate(...midpoint(a, b));
+  return g;
+}
+</code></pre>
+<p>Kafes elektrik direği, trafo portalı, çit — hepsi bu tek fonksiyonla.
+→ <code>src/components/erlebnis/Kraftwerke.tsx</code></p>
+<h3 id="tricks-14-mergegeometries-malzeme-basina-tek-draw-call">14. <code>mergeGeometries</code> → malzeme başına tek draw call</h3>
+<p>Her santral, malzeme başına tek mesh. Güneş parkındaki 39 tablo + 156
+ayak = 2 draw call.</p>
+<h3 id="tricks-15-ayni-nesneden-cok-varsa-instancedmesh">15. Aynı nesneden çok varsa <code>InstancedMesh</code></h3>
+<p>140 türbinlik filo = 2 draw call (direk+gondol, rotor). Rotorlar
+matrislerle döner. Elektrik direkleri de tek InstancedMesh.
+→ <code>Flotte.tsx</code>, <code>Kraftwerke.tsx</code></p>
+<h3 id="tricks-16-yerden-yukselme-scale-y">16. &quot;Yerden yükselme&quot; = <code>scale.y</code></h3>
+<p>Santral grubunun <code>scale.y</code>&#39;si 0→1. Ucuz, okunur, geri sarılabilir.
+Filo için her instance&#39;a gecikme (<code>verzug</code>) eklenir → dalga gibi yükselir.</p>
+<h3 id="tricks-17-kablo-sarkmasi-parabol">17. Kablo sarkması = parabol</h3>
+<pre><code class="language-ts">y = lerp(a.y, b.y, t) - sag * 4 * t * (1 - t);
+</code></pre>
+<p>Gerçek catenary&#39;e görsel olarak yeterince yakın, maliyeti sıfır.</p>
+<h3 id="tricks-18-kablo-cekilir-setdrawrange">18. Kablo &quot;çekilir&quot;: <code>setDrawRange</code></h3>
+<p>Tüm kablolar tek <code>LineSegments</code>. Vertex&#39;leri <strong>açıklık → parça → kablo</strong>
+sırasıyla yaz; sonra:</p>
+<pre><code class="language-ts">seile.geometry.setDrawRange(0, segmentSayısı * PRO_STUECK);
+</code></pre>
+<p>Hat scroll&#39;la direkten direğe uzar. Ek geometri yok, ek draw call yok.</p>
+<h3 id="tricks-19-tek-spur-bes-santral">19. Tek spur, beş santral</h3>
+<p><code>kraftwerke</code> değeri 0–5: i&#39;yi geçince i. santral yükselir, [i, i+1)
+aralığında kırmızı halka yanar. Direkler de &quot;hatta vardıkları&quot; değerde
+(<code>a</code>) yükselir. Bir sayı, bütün sahne.
+→ <code>kraftwerkOrte.ts</code> (<code>trasse[].a</code>)</p>
+<h3 id="tricks-20-model-dosyasi-yok-ssrdan-guvenli-veri">20. Model dosyası yok = SSR&#39;dan güvenli veri</h3>
+<p>Konum verisi <code>&quot;use client&quot;</code> olmayan ayrı dosyada (<code>kraftwerkOrte.ts</code>).
+Böylece sunucu tarafındaki partisyon kameraları aynı veriden hesaplar,
+client sahnesi aynı veriden geometriyi kurar.</p>
+<h3 id="tricks-21-golge-kamerasi-bakilan-yeri-takip-etsin">21. Gölge kamerası bakılan yeri takip etsin</h3>
+<p>Directional light&#39;ın gölge kamerası sabit bir kutu (±180 m). Başta
+ana türbine sabitti; 2 km ötedeki santraller hiç gölge düşürmüyordu ve
+&quot;zemine yapıştırılmış kutu&quot; gibi görünüyordu. Şimdi her karede kameranın
+bakış noktasına taşınıyor. Taşırken ışık uzayındaki texel ızgarasına
+yuvarlanmalı, yoksa gölge kenarları kayarken titrer (bkz. #26).
+→ <code>Szene.tsx</code> (<code>Licht</code>)</p>
+<h3 id="tricks-22-kamerayi-gunesle-ayni-yone-koyma">22. Kamerayı güneşle aynı yöne koyma</h3>
+<p>Gölgeler açıldı ama yine görünmüyordu: sabah güneşi güneydoğudan,
+kamera da güneydoğudan bakıyordu. Önden aydınlatma, bütün gölgeleri
+nesnelerin arkasına düşürür ve sahne düz görünür. Kamerayı güneybatıya
+aldık; ışık yandan geldi ve her nesnenin yanına gölgesi düştü. Aynı
+geometri, sıfır maliyet, en büyük gerçekçilik farkı.</p>
+<h3 id="tricks-23-simsiyah-paneller-metalness-envmap-yok">23. Simsiyah paneller: metalness + envMap yok</h3>
+<p><code>metalness: 0.35</code> ve çok koyu bir mavi kullanılmıştı. Sahnede
+<code>environment</code> olmadığı için metal yüzeyin yansıtacağı bir şey yok,
+sonuç simsiyah. Çözüm: <code>metalness: 0</code>, düşük roughness ve rengi
+dokudan almak.</p>
+<h3 id="tricks-24-canvas-ile-prosedurel-dokular">24. Canvas ile prosedürel dokular</h3>
+<p>Model yok, ama doku da indirmiyoruz: <code>&lt;canvas&gt;</code>&#39;a çizip
+<code>CanvasTexture</code> yapıyoruz. Tek bir doku, <code>clone()</code> + farklı
+<code>repeat</code> ile birçok malzemede kullanılıyor.</p>
+<ul>
+<li>Güneş paneli: 2×38 modül, her biri 6×10 hücre, bus-bar ve çerçeve</li>
+<li>Kalıp izli beton: kalıp derzleri, ankraj delikleri, altta kir</li>
+<li>Oluklu konteyner sacı, klima ızgarası, BHKW panjuru</li>
+<li>Silaj brandası: kıvrımlar ve üstünde ağırlık lastikleri</li>
+<li>Çit örgüsü: şeffaf PNG gibi, <code>alphaTest</code> ile
+→ <code>src/components/erlebnis/kraftwerkBauten.ts</code></li>
+</ul>
+<h3 id="tricks-25-kutu-ile-tesis-arasindaki-fark-detay-sayisinda">25. &quot;Kutu&quot; ile &quot;tesis&quot; arasındaki fark detay sayısında</h3>
+<p>Gerçekçilik shader&#39;dan önce <strong>parça sayısıyla</strong> geliyor:</p>
+<ul>
+<li>Konteynerin uçlarında klima ünitesi, altında beton temel</li>
+<li>İzolatör = gövde + her 20 cm&#39;de bir disk (bunu gören beyin hemen
+&quot;porselen izolatör&quot; diyor)</li>
+<li>Trafo = tank + 2×18 radyatör kanadı + genleşme tankı + buşingler</li>
+<li>Kafes portal = 4 dikme + her 1.5 m&#39;de kuşak ve çapraz
+Hepsi <code>mergeGeometries</code> ile malzeme başına tek draw call.</li>
+</ul>
+<h3 id="tricks-26-hareket-ederken-titreme-uc-ayri-kaynak">26. Hareket ederken titreme: üç ayrı kaynak</h3>
+<p>Kamera hareket ederken sahne &quot;karıncalanıyordu&quot;. Tek bir sebep yoktu:</p>
+<ol>
+<li><strong>alphaTest + mipmap = yanıp sönen teller.</strong> Çit örgüsü
+<code>alphaTest</code> ile kesiliyordu. Uzakta mipmap alfa değerini ortalayınca
+teller eşiğin altına düşüp her karede görünüp kayboluyordu (moiré).
+Çözüm: <code>transparent: true, depthWrite: false</code>, alphaTest yok.
+Mipmap teli artık yarı saydam, sakin bir griye ortalıyor.</li>
+<li><strong>Z-fighting.</strong> Çakıl plakasının üstü 0.06 m&#39;de, zemindeki gölge
+düzlemi 0.05 m&#39;de. Near=1, far=20000 ile 300 m&#39;de derinlik hassasiyeti
+~5 mm; 1 cm fark yetmiyor. Çözüm: kaplamalar 0.18 m, yollar 0.30 m.</li>
+<li><strong>Gölge kenarı kayması.</strong> Gölge kamerasını dünya x/z&#39;de yuvarlamak
+yetmiyor; ışık eğik geldiği için ızgara ışığın texel&#39;lerine denk
+gelmiyor. Yuvarlamayı ışık uzayında yap:<pre><code class="language-ts">const toLight = sunDir.normalize();
+const right = cross(UP, toLight).normalize();  // three&#39;nin lookAt ekseni
+const up = cross(toLight, right);
+const a = round(dot(target, right) / texel) * texel;
+const b = round(dot(target, up) / texel) * texel;
+center = right*a + up*b + toLight*dot(target, toLight);
+</code></pre>
+Ayrıca kutu ±180 → ±140 m, harita 2048 → 4096: texel 17 cm → 7 cm.</li>
+</ol>
+<h3 id="tricks-27-tempo-bolumler-arasina-nefes-payi">27. Tempo: bölümler arasına &quot;nefes payı&quot;</h3>
+<p>Sticky yapıda iki bölüm arasındaki kamera uçuşu, sonraki bölümün
+içeri kaydığı <strong>1 ekran yüksekliğine</strong> sıkışıyor. Santrallerden
+türbine 2 km&#39;lik dönüş tek tekerlek hamlesinde geçiyordu.</p>
+<p>Çözüm: her sabit bölümün altına <code>margin-bottom: 0.75 × 100svh</code>.
+Bu boşlukta metin yok, sadece 3D kamera uçuyor; geçiş 1.75 ekrana
+yayılıyor. Anlatı zamanı boşluğu da sayacak şekilde hesaplanıyor:</p>
+<pre><code class="language-ts">anteil = (scrollY - top[i]) / (top[i + 1] - top[i]);   // boşluk dahil
+halt   = (hoehe - 1) / (hoehe + LUFT);                  // sabit kalma oranı
+</code></pre>
+<p>Metin zamanlaması etkilenmiyor (o sadece sabit kısma bakıyor).
+Lenis tarafında da <code>wheelMultiplier</code> 0.9 → 0.75 ve <code>lerp</code> 0.085 → 0.075.
+→ <code>partitur.ts</code> (<code>LUFT</code>, <code>haltAnteil</code>), <code>Erlebnis.tsx</code>, <code>erlebnis.css</code></p>
+<h3 id="tricks-28-i-lk-gorunumde-takilma-on-isitma">28. İlk görünümde takılma: ön ısıtma</h3>
+<p>Ölçümde scroll sırasında 305 ms&#39;lik bir &quot;long task&quot; vardı: santraller
+ilk kez ekrana girdiğinde three shader programlarını (gölge varyantları
+dahil) derliyor ve canvas dokularını GPU&#39;ya yüklüyordu. Görünmez nesneler
+hiç render edilmediği için bu iş açılışta yapılmıyordu.</p>
+<p>Çözüm: Canvas açılınca <strong>tek bir kare</strong> her şey görünürken render et,
+sonra eski görünürlüğü geri yükle:</p>
+<pre><code class="language-ts">scene.traverse(o =&gt; { if (!o.visible) { hidden.push(o); o.visible = true; } });
+gl.render(scene, camera);
+hidden.forEach(o =&gt; (o.visible = false));
+</code></pre>
+<p>Sonuç: tam sayfa scroll&#39;da long task 305 ms → 0.</p>
+<p>Bu yetmedi: frustum dışındaki nesneleri three yine atlıyor. 1 km
+uzaktaki santraller ön ısıtma karesinde kadraj dışında kaldığı için
+derlenmiyordu. Aynı karede <code>frustumCulled</code>&#39;ı da geçici olarak kapat.
+→ <code>Szene.tsx</code> (<code>Vorwaermen</code>)</p>
+<h3 id="tricks-29-ana-is-parcacigi-once-oku-sonra-yaz">29. Ana iş parçacığı: önce oku, sonra yaz</h3>
+<p>rAF döngüsü önce stil yazıp sonra <code>getBoundingClientRect</code> okuyordu.
+Her karede zorunlu stil + layout hesabı demek. Okumaları karenin
+başına aldık (layout önceki kareden temiz). Ayrıca:</p>
+<ul>
+<li><code>:root</code>&#39;a yazılan CSS değişkenleri (gökyüzü rengi) bütün sayfanın
+stilini geçersiz kılıyor → sadece değişince yaz.</li>
+<li>Sayaç <code>textContent</code>&#39;i değişmese de yazılıyordu → karşılaştır, sonra yaz.</li>
+</ul>
+<h3 id="tricks-30-adaptif-dpri-yukari-asagi-oynatma">30. Adaptif DPR&#39;ı yukarı-aşağı oynatma</h3>
+<p><code>PerformanceMonitor</code> FPS&#39;e göre pixel ratio&#39;yu artırıp azaltıyordu.
+Her değişiklik çizim tamponunu yeniden oluşturuyor, bu da kendi başına
+bir takılma. Artık sadece bir kez ve sadece aşağı iniyor.</p>
+<h3 id="tricks-31-zemin-izgarasi-mesafeye-degil-piksel-yogunluguna-gore-son">31. Zemin ızgarası: mesafeye değil piksel yoğunluğuna göre sön</h3>
+<p>Uzakta 100 m&#39;lik hücreler birkaç piksele iniyor, çizgiler birbirine
+giriyor ve kamera hareket ettikçe bütün ekranda moiré oluşuyor.
+Shader içinde <code>fwidth</code> ile hücrenin ekrandaki boyutunu ölçüp,
+yoğunlaşınca ızgarayı söndürüyoruz:</p>
+<pre><code class="language-glsl">vec2 w = fwidth(p / cell);
+line *= 1.0 - smoothstep(0.08, 0.3, max(w.x, w.y));
+</code></pre>
+<h3 id="tricks-32-okurken-gunes-donmesin">32. Okurken güneş dönmesin</h3>
+<p>Saat scroll&#39;a bağlı olduğu için güneş, metin okunurken de yavaşça
+dönüyordu. Güneş dönünce her gölge kenarı gölge haritasında kayıyor,
+yani titriyor. Gökyüzü rengi akmaya devam ediyor; ama güneşin <strong>yönü</strong>
+sabit bölümde duruyor, sadece bölüm geçişlerinde (kamera zaten
+uçarken) dönüyor.
+→ <code>zeitachse.ts</code> (<code>sonnenUhrAus</code>), <code>lauf.sonnenUhr</code></p>
+<h3 id="tricks-33-css-transition-scrolla-bagli-sahnede-dusman">33. CSS <code>transition</code> scroll&#39;a bağlı sahnede düşman</h3>
+<p>İki zaman tabanlı geçiş scroll&#39;dan bağımsız oynuyordu:</p>
+<ul>
+<li>Metnin arkasındaki &quot;veil&quot; bölüm değişince 700 ms&#39;de beliriyordu; hızlı
+scroll&#39;da geç, yavaşta erken. Artık opaklığını rAF döngüsü yazıyor:
+bölümün sabit kısmı bitince, kayma mesafesi boyunca karışıyor.</li>
+<li>Kökteki <code>.erlebnis { transition: color 700ms }</code>: gece/gündüz değişince
+rengi miras alan <strong>her kelime</strong> için ayrı bir animasyon başladı.
+Ölçüm: 204 ms donma. Transition kaldırıldı; renk değişimi bölümler
+arası boşluğa, ekranda metin yokken denk geliyor.</li>
+</ul>
+<h3 id="tricks-34-kamera-hizini-olc-sonra-bosluk-ver">34. Kamera hızını ölç, sonra boşluk ver</h3>
+<p><code>?debug</code> ile kamera durumu <code>window.__kamera</code>&#39;ya açılıyor. Sayfayı 50 px
+adımlarla gezip her adımda kameranın aldığı yolu ölçüyoruz:</p>
+<pre><code class="language-js">for (let y = 0; y &lt;= max; y += 50) {
+  scrollTo(0, y); await frame(); await frame();
+  d = |pos - prevPos| + 0.5 * |target - prevTarget|;   // m / 50px
+}
+</code></pre>
+<p>İlk ölçüm: 4 bakış bölümünde <strong>79 m / 100 px</strong> (90°&#39;lik dönüş tek
+tekerlek hamlesinde). Düzeltmeler:</p>
+<ul>
+<li>Uzun yol alan bölüm uzun olsun, duruşlar kısa, uçuşlar uzun.</li>
+<li>Bölüm başına <code>luft</code>: uzun geçişlere (gece → repowering, repowering →
+kapanış) daha fazla boşluk.</li>
+<li>Türbin içindeki uçuşlar takt&#39;ın %30&#39;u yerine çoğunluğunu alıyor.
+Sonuç: tepe hız 79 → 39 m / 100 px.</li>
+</ul>
+<h3 id="tricks-35-beklerken-geri-kayma-git-gel">35. Beklerken geri kayma = &quot;git gel&quot;</h3>
+<p>Okuma sırasında kameraya küçük bir kayma (drift) vermek güzel durur.
+Ama kayma, kameranın sonra gideceği yönün tersineyse monoton kübik
+eğri o noktada durur ve geri döner: türbin ekranda ileri geri sallanır.
+Kural: bekleme ya tam durur (iki aynı keyframe) ya da sonraki uçuşun
+yönünde kayar. Ölçmek için sayfayı 10 px adımlarla gez, kameranın
+hareket yönünü kaydet; 400 px içinde yön tersine dönüyorsa (<code>dot &lt; -0.3</code>)
+orada sekme var. Aynı ölçümde görüş yönünün dönüşünü de topla
+(derece / 100 px): metre tek başına yanıltır, gondolun 15 m yakınında
+küçük bir yol büyük bir dönüş demek.
+Sonuç: canlı sürümde 2 sekme → 0; en hızlı dönüş 113 → 46°/100 px
+(gondoldan kuleye inişte kamera artık türbinin etrafından dolaşmıyor).</p>
+<p>Kamera yönü tek başına yetmedi. Santral bölümünde kamera her santralin
+z konumunu takip ediyordu (±35 m zikzak). Kameranın yönü hiç tersine
+dönmüyordu, ama zemin ekranda her santralde aşağı-yukarı sallanıyordu.
+Bunu görmek için dünya noktalarını kameranın her adımında ekrana
+yansıt (projeksiyon) ve ekrandaki y yönünün kaç kez döndüğünü say:
+13 → 0. Çözüm: kamera düz bir rayda gidiyor (<code>NETZ_Z</code>), dönüş uçuşunda
+her eksen tek yönde değişiyor. Kamera dönüşe başlamadan önce yerinde durup
+doğuya dönüyor, sonra ileri uçuyor. Santraller kameranın arkasında
+iniyor; böylece ekranda hiçbir şey geri kaymıyor.
+→ <code>_start/partitur.ts</code></p>
+<h3 id="tricks-36-park-eden-rotor-geri-donmesin">36. Park eden rotor geri dönmesin</h3>
+<p>Rotor, scroll&#39;la &quot;Y&quot; konumuna park ediyor: <code>açı = serbest + (hedef − serbest) · park</code>. Yavaş scroll&#39;da serbest açı hedefi geçerse karışım
+rotoru geri çeker. Çözüm: park sürerken serbest açıyı hedefte kırp
+(<code>min(serbest, hedef)</code>), rotor hedefte frenlenir.
+→ <code>Anlage.tsx</code></p>
+<h3 id="tricks-37-scrolly-yerine-lenisin-kendi-degeri">37. scrollY yerine Lenis&#39;in kendi değeri</h3>
+<p><code>scrollY</code> cihaz pikseline yuvarlanır. Lenis&#39;in yavaşlayan kuyruğunda
+değer tam piksellerle sıçrar, aradaki karelerde durur; gondol yakınında
+kamera titrer. <code>lenis.scroll</code> ondalıklıdır, sahne onu okur.
+→ <code>Erlebnis.tsx</code></p>
+<h3 id="tricks-38-flat-olcekli-instancei-gizle">38. Flat ölçekli instance&#39;ı gizle</h3>
+<p>Henüz yükselmemiş direk <code>scale.y = 0.0001</code> ile duruyordu; traversler
+zeminde düz siyah bir &quot;X&quot; olarak görünüyordu. Yükselmemiş instance&#39;ın
+ölçeği tamamen 0.</p>
+<p>Daha iyisi: hiç ezme. Ezilmiş geometri alçak akşam güneşinde çizgili
+gölge bırakıyordu. Santraller ve direkler artık kendi yükseklikleri
+kadar zeminin altından yukarı kayıyor (<code>position.y = -(1 - h) * yükseklik</code>).
+Opak zemin, altta kalan kısmı zaten gizliyor.</p>
+<p>Kırmızı halkayı da spur değerine değil, metindeki takta bağla. Yoksa
+santraller dönüşte inerken spur her santralden bir kez daha geçiyor ve
+halkalar sırayla yanıp sönüyor.
+→ <code>Kraftwerke.tsx</code></p>
+<hr>
+<h2 id="tricks-3d-dom">3D ↔ DOM</h2>
+<h3 id="tricks-39-3d-noktadan-html-karta-kilavuz-cizgisi">39. 3D noktadan HTML karta kılavuz çizgisi</h3>
+<p>Her frame anchor <code>project(camera)</code> ile ekran koordinatına çevrilir,
+<code>lauf.anker[id]</code>&#39;ye yazılır; DOM tarafında <code>data-teil=id</code> olan kartın
+kenarından SVG path çizilir.
+→ <code>Anlage.tsx</code>, <code>Kraftwerke.tsx</code> (yazan), <code>Erlebnis.tsx</code> (çizen)</p>
+<h3 id="tricks-40-metin-her-zaman-htmlde">40. Metin her zaman HTML&#39;de</h3>
+<p>3D yalnızca süs. WebGL yoksa CSS gradyan kalır; <code>webglcontextlost</code> olursa
+Canvas <code>key</code> değiştirilerek yeniden kurulur.</p>
+<hr>
+<h2 id="tricks-performans-notlari">Performans notları</h2>
+<ul>
+<li>Adaptif DPR: drei <code>PerformanceMonitor</code> FPS 50&#39;nin altına düşünce
+pixel ratio&#39;yu 0.25&#39;lik adımlarla 1&#39;e kadar indirir, toparlanınca
+geri çıkarır. Ruckeln yerine biraz daha yumuşak görüntü.</li>
+<li>Gölge kamerası kameranın baktığı noktanın etrafında (±140 m); odaktaki
+santral gölge atar, uzaktakiler atmaz.</li>
+<li>Geometriler modül seviyesinde bir kez kurulur; sayfa değişiminde
+yeniden oluşturulmaz.</li>
+</ul>
+  </article>
+
+  <article id="sayfa-api" class="sayfa" data-bolum hidden>
+    <div class="dosya-bas"><p class="etiket" lang="en">docs/04-sayfa-api.md</p><a href="https://github.com/omerfarukdemiral/3d-immersive/blob/main/docs/04-sayfa-api.md">GitHub'da aç</a></div>
+<h1 id="sayfa-api-04-sayfa-apisi-yeni-bir-alt-sayfa-eklemek">04 · Sayfa API&#39;si — yeni bir alt sayfa eklemek</h1>
+<p>Bu belge ortak sahne ile tek tek sayfalar arasındaki sözleşmedir. Bir
+alt sayfa eklemek ya da değiştirmek için bilmen gereken her şey burada.</p>
+<p>Kısaca: bir sayfa iki şey verir. Bir <strong>Partitur</strong> (sahne, kamera ve HUD
+ne yapacak) ve <strong>Bausteine</strong>&#39;den kurulmuş metni. Sahne, üst bar, HUD,
+bölüm rayı ve sayfa geçişi layout&#39;a aittir; sayfa bunlara dokunmaz.</p>
+<hr>
+<h2 id="sayfa-api-1-ortak-dosyalar">1. Ortak dosyalar</h2>
+<p>Bunlar sahnenin parçası. Bir sayfa için değiştirmen gerekmez; bir şey
+eksikse sayfaya özel kopya yazmak yerine buraya genel olarak ekle.</p>
+<div class="tablo"><table>
+<thead>
+<tr>
+<th>Dosya</th>
+<th>İçerik</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/(site)/layout.tsx</code></td>
+<td>tüm sayfaların çerçevesi: canvas ile <code>Erlebnis</code></td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/Erlebnis.tsx</code></td>
+<td>rAF döngüsü: scroll → T, takt&#39;lar, HUD, bölüm rayı, sayfa geçişi</td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/Szene.tsx</code></td>
+<td>canvas, kamera (geçiş dahil), gökyüzü, ışık, zemin, <code>zusatz</code></td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/Anlage.tsx</code></td>
+<td>tek türbin, ankerler, çizgi çizimi</td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/Flotte.tsx</code></td>
+<td>140 türbin + 9 planlama silueti</td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/Kraftwerke.tsx</code></td>
+<td>beş santral ve enerji hattı</td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/Karte.tsx</code></td>
+<td>zemindeki Almanya haritası</td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/partitur.ts</code></td>
+<td>tipler + yardımcılar (<code>zeitraster</code>, <code>stellung</code>)</td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/zeitachse.ts</code></td>
+<td>eğriler, saat, gökyüzü (<code>klemm</code>, <code>zahl</code>, <code>istNacht</code> …)</td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/lauf.ts</code></td>
+<td>ortak durum (<code>lauf</code>), kayıt (<code>buehne</code>)</td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/rundgang.ts</code></td>
+<td>sayfa sırası, kapıdaki ölçü</td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/bausteine/*</code></td>
+<td>Bausteine</td>
+</tr>
+<tr>
+<td><code>src/components/erlebnis/erlebnis.css</code></td>
+<td>tüm stiller, <code>.erlebnis</code> altında</td>
+</tr>
+<tr>
+<td><code>src/app/(site)/page.tsx</code>, <code>src/app/(site)/_start/*</code></td>
+<td>ana sayfa</td>
+</tr>
+</tbody></table></div>
+<p>Sayfaya özel stil: kendi klasöründe bir CSS modülü
+(<code>seite.module.css</code>), sınıflar yalnızca sayfanın kök elemanı altında.
+Token&#39;lar (<code>--tinte</code>, <code>--papier</code>, <code>--signal</code>, <code>--text</code>, <code>--text-2</code>,
+<code>--text-3</code>, <code>--linie</code>, <code>--horizont</code>, <code>--rand</code>) <code>.erlebnis</code> altında her
+yerde kullanılabilir; gece modunda <code>--text*</code> kendiliğinden açık renge
+döner.</p>
+<hr>
+<h2 id="sayfa-api-2-bir-sayfanin-dosyalari">2. Bir sayfanın dosyaları</h2>
+<pre><code>src/app/(site)/&lt;yol&gt;/
+  page.tsx          server: metadata + Bausteine&#39;den metin + &lt;Buehne /&gt;
+  partitur.ts       Partitur (&quot;use client&quot; yok; server ve client okur)
+  Buehne.tsx        &quot;use client&quot;: Partitur&#39;u kaydeder (aşağıda)
+  Hoehenring.tsx    isteğe bağlı, &quot;use client&quot;: canvas&#39;a ek R3F bileşeni
+  seite.module.css  isteğe bağlı
+</code></pre>
+<p>Neden üç dosya: Partitur fonksiyon (HUD formatlayıcı) ve bileşen
+(<code>zusatz</code>) içerebilir. Bunlar server&#39;dan client&#39;a geçirilemez. Server
+<code>partitur.ts</code>&#39;ten yalnızca veriyi okur (bölümler, yükseklikler), client
+nesnenin tamamını <code>Buehne.tsx</code> üzerinden alır.</p>
+<p><code>Buehne.tsx</code> hep aynıdır:</p>
+<pre><code class="language-tsx">&quot;use client&quot;;
+
+import Anmeldung from &quot;@/components/erlebnis/bausteine/Anmeldung&quot;;
+import { partitur } from &quot;./partitur&quot;;
+
+/** Meldet die Partitur dieser Seite an der Bühne an. */
+export default function Buehne() {
+  return &lt;Anmeldung partitur={partitur} /&gt;;
+}
+</code></pre>
+<p>Dinamik sayfalar (<code>/services/[slug]</code>, <code>/insights/[slug]</code>): her slug için
+bir Partitur, modül seviyesinde bir <code>Map&lt;string, Partitur&gt;</code> içinde. Her
+render&#39;da yeniden kurma: sahne sayfa değişimini nesnenin kimliğinden
+anlar. <code>Buehne.tsx</code> slug&#39;ı prop olarak alır. Örnek:
+<code>src/app/(site)/services/[slug]/Buehne.tsx</code>.</p>
+<p>Uzun sayfaların Partitur&#39;u ve parçaları <code>src/components/seiten/&lt;konu&gt;/</code>
+altında da durabilir; yönlendirme klasöründe kalan tek şey <code>page.tsx</code> ve
+<code>Buehne.tsx</code> olur.</p>
+<hr>
+<h2 id="sayfa-api-3-sahne-nasil-oynar">3. Sahne nasıl oynar</h2>
+<ol>
+<li><code>(site)/layout.tsx</code>, <code>Erlebnis</code>&#39;i canvas, üst bar, bölüm rayı ve HUD
+ile render eder. Sayfalar arasında geçerken layout yerinde kalır;
+canvas hiç yeniden kurulmaz.</li>
+<li>Sayfa <code>&lt;Buehne /&gt;</code> render eder → <code>Anmeldung</code> Partitur&#39;u bir layout
+effect&#39;te <code>buehne.setzen</code> ile kaydeder.</li>
+<li><code>Erlebnis</code> sayfadaki tüm <code>[data-kapitel]</code> bölümlerini toplar, ölçer
+ve döngüyü başlatır: yumuşatılmış scroll (Lenis) → <strong>anlatı zamanı
+T</strong> → takt&#39;lar, HUD, gökyüzü, sahne.</li>
+<li><strong>Sayfa geçişi:</strong> yeni sayfa en üstten başlar (<code>#anker</code> ya da
+ileri/geri hariç). Kamera, saat ve sahne durumu scroll&#39;dan bağımsız
+olarak yaklaşık <strong>1 sn</strong> içinde eski sayfanın son konumundan yenisinin
+ilk konumuna geçer. Bu sürede <code>lauf.wechsel</code> 0 → 1 gider.</li>
+</ol>
+<p><strong>Anlatı zamanı T:</strong> tam sayı kısmı bölümün indeksi (HTML sırasıyla),
+kesir kısmı bölüm içindeki yol (0–1, bölümün tüm uzunluğu boyunca).
+<code>hoehe</code> ekran yüksekliğindeki sabit bir sahne, yolunun
+<code>(hoehe − 1) / (hoehe + luft)</code> kadarında yerinde durur (&quot;Halt&quot;).
+Kalan kısımda sahne dışarı kayar, <code>luft</code> (varsayılan <code>LUFT</code> = 1 ekran)
+boyunca boşluk geçer ve sonraki bölüm içeri girer; kamera uçuşları
+burada olur. Takt&#39;lar (<code>data-takt</code>) yalnızca Halt boyunca 0–1 sayar;
+<code>tAus(id, q)</code> aynı q&#39;yu T&#39;ye çevirir.</p>
+<p>Geliştirme modunda HTML&#39;deki bölümler bölüm listesiyle uyuşmazsa konsol
+uyarır: <code>[Bühne] Abschnitte im HTML (…) passen nicht zur Partitur …</code>.</p>
+<hr>
+<h2 id="sayfa-api-4-partitur">4. Partitur</h2>
+<p>Tip: <code>@/components/erlebnis/partitur</code> içindeki <code>Partitur</code>.</p>
+<div class="tablo"><table>
+<thead>
+<tr>
+<th>Alan</th>
+<th>Tip</th>
+<th>Zorunlu</th>
+<th>Anlamı</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>evet</td>
+<td>tekil, en iyisi yol (<code>&quot;/patterns&quot;</code>)</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>string</code></td>
+<td>evet</td>
+<td>sayfa adı (Auftakt&#39;taki Marke&#39;de)</td>
+</tr>
+<tr>
+<td><code>bewegung</code></td>
+<td><code>&quot;L0&quot; | &quot;L1&quot; | &quot;L2&quot; | &quot;L3&quot;</code></td>
+<td>evet</td>
+<td>hareket seviyesi, bkz. 4.6</td>
+</tr>
+<tr>
+<td><code>kapitel</code></td>
+<td><code>Kapiteldef[]</code></td>
+<td>evet</td>
+<td>bölümler, <strong>HTML sırasıyla</strong></td>
+</tr>
+<tr>
+<td><code>kamera</code></td>
+<td><code>Punkt&lt;Stellung&gt;[]</code></td>
+<td>evet</td>
+<td>en az bir konum; L0/L1&#39;de yalnızca ilki geçerli</td>
+</tr>
+<tr>
+<td><code>himmel</code></td>
+<td><code>Himmelsquelle</code></td>
+<td>evet</td>
+<td>saat nereden gelir</td>
+</tr>
+<tr>
+<td><code>spuren</code></td>
+<td><code>Partial&lt;Record&lt;keyof Szenenzustand, Spur&gt;&gt;</code></td>
+<td>hayır</td>
+<td>sahne durumu T üzerinden</td>
+</tr>
+<tr>
+<td><code>fokus</code></td>
+<td><code>Fokus[]</code></td>
+<td>hayır</td>
+<td>parça parlar + kılavuz çizgi</td>
+</tr>
+<tr>
+<td><code>hud</code></td>
+<td><code>(T, k: HudKontext) =&gt; HudWert</code></td>
+<td>hayır</td>
+<td>HUD&#39;daki ölçü</td>
+</tr>
+<tr>
+<td><code>nebel</code></td>
+<td><code>[nah, fern]</code></td>
+<td>hayır</td>
+<td>sis, metre; varsayılan <code>[600, 5200]</code></td>
+</tr>
+<tr>
+<td><code>zusatz</code></td>
+<td><code>ComponentType</code></td>
+<td>hayır</td>
+<td>canvas&#39;ta sayfaya özel R3F bileşeni</td>
+</tr>
+</tbody></table></div>
+<h3 id="sayfa-api-4-1-kapitel">4.1 Kapitel</h3>
+<pre><code class="language-ts">type Kapiteldef = {
+  id: string;      // bölümün id&#39;si ve data-kapitel değeri
+  titel: string;   // sağdaki bölüm rayı, HUD&#39;da &quot;03 / 05 Titel&quot;
+  hoehe?: number;  // yalnızca sabit sahne (Kapitel): ekran yüksekliği
+  uhr?: number;    // saat (24 üstü = ertesi gün), himmel &quot;kapitel&quot; için
+  marke?: string;  // Marke&#39;deki bilgi: &quot;Height 0 m&quot;, &quot;Heading 090°&quot;
+  luft?: number;   // bu bölümden sonraki boşluk, ekran (varsayılan LUFT = 1)
+};
+</code></pre>
+<ul>
+<li><strong>Sabit sahne</strong> (<code>Kapitel</code> bileşeni): <code>hoehe</code> ver (yoksa 2 kullanılır).
+Pratik kural: <code>1 + 0,6 × takt sayısı</code>, en az 1,6. Bir takt
+~0,5–0,7 ekran scroll ister, daha azında acele hissi verir.</li>
+<li><strong>Akan bölüm</strong> (<code>Datenblatt</code>, <code>Abspann</code>): <code>hoehe</code> yok; sahne gerçek
+yüksekliği ölçer.</li>
+<li><code>luft</code>: sonraki bölüme kamera yolu çok uzunsa artır.</li>
+<li>Sayfa uzunluğuna dikkat: ana sayfa ~38 ekran ve zaten uzun sayılır.
+Alt sayfalar için kaba sınır: L3 ≤ 12, L2 ≤ 8 ekran sabit sahne.</li>
+</ul>
+<h3 id="sayfa-api-4-2-kamera">4.2 Kamera</h3>
+<pre><code class="language-ts">type Stellung = {
+  pos: number[];    // kamera konumu [x, y, z], metre
+  blick: number[];  // hedef nokta
+  fov: number;      // varsayılan 36
+  versatz: number;  // görüntüyü yana kaydır (genişlik oranı), + = türbin sağa
+  hoch: number;     // dikey ekran: görüntüyü yüksekliğin bu oranı kadar kaldır (varsayılan 0,16)
+  weite: number;    // dikey ekran: ek geri çekilme (varsayılan 1)
+  dreh: number;     // dikey ekran: kule ekseni etrafında dönüş (derece)
+};
+</code></pre>
+<p>Dünya: 1 birim = 1 m. Kule tabanı orijinde, göbek ~60 m&#39;de (<code>massstab</code>
+2 → 120 m), rotor <strong>+x</strong>&#39;e bakar. Doğu = +x, güney = +z. Güneş sabah
+doğuda, öğlen güneyde; pozitif z&#39;deki kameralar türbini gündüz ışıkta
+görür.</p>
+<pre><code class="language-ts">import { stellung, zeitraster } from &quot;@/components/erlebnis/partitur&quot;;
+const { tAus, index } = zeitraster(kapitel);
+
+kamera: [
+  stellung(tAus(&quot;aufstieg&quot;, 0), [62, 3, 74], [0, 14, 0], { versatz: 0.2 }),
+  stellung(tAus(&quot;aufstieg&quot;, 1), [46, 64, 54], [0, 60, 0], { versatz: 0.2 }),
+  stellung(index(&quot;daten&quot;), [180, 60, 160], [0, 45, 0]),
+]
+</code></pre>
+<p>İki konum arasında yumuşak geçiş yapılır. Bir <strong>duruş</strong> için iki aynı
+konum koy; hareket o zaman aralarında kalır. Metin solda
+(<code>seite=&quot;links&quot;</code>) → <code>versatz</code> pozitif (0,16–0,25), metin sağda → negatif.
+Dikey ekranda <code>versatz</code> kapalıdır; metin altta, türbin üstte durur
+(<code>hoch</code>).</p>
+<h3 id="sayfa-api-4-3-gokyuzu">4.3 Gökyüzü</h3>
+<pre><code class="language-ts">{ quelle: &quot;kapitel&quot; }            // kapitel[].uhr&#39;dan (ana sayfa gibi)
+{ quelle: &quot;spur&quot;, uhr: Spur }    // kendi eğrin: [[t, 3 + 10/60], [t2, 7]]
+{ quelle: &quot;fest&quot;, uhr: 13 }      // sabit saat
+{ quelle: &quot;echt&quot; }               // gerçek saat, Europe/Berlin (iletişim, formlar)
+</code></pre>
+<p>Saatler: 06:25 sabah (ufukta sıcak), 13:00 öğle (açık, serin),
+18:30–19:30 akşam. 20:18&#39;den sonra ve 05:30&#39;dan önce gece
+(<code>istNacht</code>, kökte <code>data-nacht=&quot;1&quot;</code>): metin açık renge döner, uçuş
+ikaz ışıkları ve ölçüm noktaları yanar. Renk değişimini sahne kendisi
+yapar.</p>
+<h3 id="sayfa-api-4-4-spuren-sahne-durumu">4.4 Spuren (sahne durumu)</h3>
+<p>Bir <code>Spur</code> ya bir sayıdır ya da <code>[T, değer][]</code> listesidir (aralarda
+yumuşak, ilk noktadan önce ve sondan sonra sabit).</p>
+<div class="tablo"><table>
+<thead>
+<tr>
+<th>Spur</th>
+<th>Varsayılan</th>
+<th>Anlamı</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>drehzahl</code></td>
+<td>9</td>
+<td>rotor devri, dev/dk (HUD sağda gösterir)</td>
+</tr>
+<tr>
+<td><code>massstab</code></td>
+<td>1</td>
+<td>1 = 60 m sınıfı, 2 = 120 m sınıfı</td>
+</tr>
+<tr>
+<td><code>parken</code></td>
+<td>0</td>
+<td>1 = rotor Y konumunda kilitli (bir kanat dik)</td>
+</tr>
+<tr>
+<td><code>huelle</code></td>
+<td>1</td>
+<td>nasel kabuğunun opaklığı; 0,12 aktarma organlarını gösterir</td>
+</tr>
+<tr>
+<td><code>geist</code></td>
+<td>0</td>
+<td>120 m sınıfının silueti (repowering)</td>
+</tr>
+<tr>
+<td><code>flotte</code></td>
+<td>0</td>
+<td>140 türbin: 0 yerin altında, 1 ayakta</td>
+</tr>
+<tr>
+<td><code>markiert</code></td>
+<td>0</td>
+<td>filoda kaç türbin sinyal kırmızısı (0–140)</td>
+</tr>
+<tr>
+<td><code>planung</code></td>
+<td>0</td>
+<td>dokuz planlama projesi kırmızı tel siluet olarak</td>
+</tr>
+<tr>
+<td><code>linien</code></td>
+<td>0</td>
+<td><strong>çizgi çizimi</strong>: 1 = yalnızca kenarlar</td>
+</tr>
+<tr>
+<td><code>anlage</code></td>
+<td>1</td>
+<td>0 = <strong>yalnızca temel</strong> (404)</td>
+</tr>
+<tr>
+<td><code>karte</code></td>
+<td>0</td>
+<td>zeminde çizgi olarak <strong>Almanya haritası</strong></td>
+</tr>
+<tr>
+<td><code>raster</code></td>
+<td>1</td>
+<td>zemindeki ölçü ızgarası (0 = kapalı, ör. haritanın altında)</td>
+</tr>
+<tr>
+<td><code>kraftwerke</code></td>
+<td>0</td>
+<td>beş santral: i → i. santral yükselir, i ile i+1 arasında odakta (0–5)</td>
+</tr>
+</tbody></table></div>
+<p>Örnekler: <code>spuren: { linien: 1, drehzahl: 0 }</code> (Standards),
+<code>spuren: { anlage: 0 }</code> (404). Harita için:
+<code>spuren: { karte: [[0, 0], [0.4, 1]], raster: 0.3 }</code>, yerden yüksek bir
+kamera ve <code>nebel: [4000, 16000]</code>; yoksa harita siste kaybolur.</p>
+<p><strong>Harita:</strong> türbin orijinde durur. Bir harita birimi (SVG,
+<code>viewBox 0 0 560 759</code>) 6 m&#39;dir; tüm Almanya ~3,4 × 4,6 km eder. Harita
+üzerindeki bir nokta için <code>@/components/erlebnis/Karte</code> içinden
+<code>karteNachWelt(x, y)</code> (SVG koordinatı → zemindeki <code>THREE.Vector3</code>).</p>
+<h3 id="sayfa-api-4-5-fokus-ve-kilavuz-cizgiler">4.5 Fokus ve kılavuz çizgiler</h3>
+<pre><code class="language-ts">fokus: [{ id: &quot;getriebe&quot;, von: tAus(&quot;teile&quot;, 0.2), bis: tAus(&quot;teile&quot;, 0.4) }]
+</code></pre>
+<p><code>von</code> ile <code>bis</code> arasında parça sinyal renginde parlar (dördünden biriyse:
+<code>nabe</code>, <code>getriebe</code>, <code>generator</code>, <code>turm</code>) ve ankerden
+<code>data-teil=&quot;&lt;id&gt;&quot;</code> taşıyan metin bloğuna kırmızı bir kılavuz çizgi
+çekilir. 4.9&#39;daki tüm id&#39;ler için anker vardır; diğerlerinde
+yalnızca çizgi çıkar, parlama olmaz.</p>
+<h3 id="sayfa-api-4-6-hareket-seviyeleri">4.6 Hareket seviyeleri</h3>
+<div class="tablo"><table>
+<thead>
+<tr>
+<th>Seviye</th>
+<th>Sahne</th>
+<th>Metin</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>L3</strong></td>
+<td>Partitur&#39;daki tam koreografi</td>
+<td>takt&#39;lar</td>
+</tr>
+<tr>
+<td><strong>L2</strong></td>
+<td>L3 gibi, ama az durak (2–5 kamera konumu)</td>
+<td>takt&#39;lar</td>
+</tr>
+<tr>
+<td><strong>L1</strong></td>
+<td>T = 0&#39;daki karede durur (ilk konum, Spuren T = 0&#39;da), rotor durur, perde %62</td>
+<td>akar (Datenblatt)</td>
+</tr>
+<tr>
+<td><strong>L0</strong></td>
+<td>L1 gibi, perde %50, ikaz ışığı yanıp sönmez; hiçbir şey kendiliğinden hareket etmez</td>
+<td>akar</td>
+</tr>
+</tbody></table></div>
+<p>L0/L1&#39;de sahne <code>lauf.szeneT = 0</code> okur; HUD yine gerçek T&#39;yi alır
+(ör. okuma ilerlemesi için). <code>prefers-reduced-motion</code>: yumuşatılmış
+scroll yok, takt&#39;lar kaymaz, sayfa geçişi anında, rotor %35 hızda.</p>
+<h3 id="sayfa-api-4-7-hud-formatlayici">4.7 HUD formatlayıcı</h3>
+<pre><code class="language-ts">type HudKontext = { uhr: number; kapitel: number; anteil: number; szene: Szenenzustand };
+type HudWert = { wert: string; etikett?: string; einheit?: string; notiz?: string };
+</code></pre>
+<p>Sol altta <code>[ETIKETT] Wert[einheit] [NOTIZ]</code> olarak görünür, boş
+parçalar atlanır. Mobilde üst barda (logonun yanında) yalnızca
+<code>Wert einheit</code> durur. <code>hud</code> yoksa sahne saati ve
+&quot;Musterstadt · 51.16° N 10.45° E&quot; gösterir.</p>
+<p><strong>Her karede</strong> çağrılır: ucuz tut, gereksiz nesne kurma. DOM yalnızca
+değer değişince yazılır.</p>
+<pre><code class="language-ts">// kuledeki yükseklik
+hud: (T) =&gt; ({ etikett: &quot;Height&quot;, wert: String(Math.round(zahl(hoehe, T))), einheit: &quot;m&quot;,
+               notiz: &quot;Hub height of this turbine&quot; }),
+
+// adım ve süre
+hud: (T) =&gt; {
+  const s = schrittBei(T);  // sayfanın kendi fonksiyonu
+  return { etikett: &quot;Step&quot;, wert: `${s + 1}/5`, notiz: ablauf[s].dauer };
+},
+
+// örnek bir gecenin saati
+hud: (_T, k) =&gt; ({ wert: uhrText(k.uhr), notiz: &quot;Sample night&quot; }),
+
+// okuma ilerlemesi (L1 yazı)
+hud: (T, k) =&gt; ({ etikett: &quot;Section&quot;, wert: `${k.kapitel + 1}/4`,
+                  notiz: `${Math.round((T / 4) * 100)} %` }),
+</code></pre>
+<p>Uydurma ölçüm değeri gösterme. Temsili bir değer ise öyle adlandır
+(&quot;Hub height of this turbine&quot;, &quot;Sample night&quot;).</p>
+<h3 id="sayfa-api-4-8-zusatz-sayfaya-ozel-sahne">4.8 Zusatz (sayfaya özel sahne)</h3>
+<p><code>zusatz</code>, canvas&#39;ta türbin ve filonun yanında render edilen bir R3F
+bileşenidir. Sayfa geçişinde kaldırılır ve yeniden kurulur. Örnek:
+<code>src/app/(site)/patterns/Hoehenring.tsx</code>.</p>
+<pre><code class="language-tsx">&quot;use client&quot;;
+import { useFrame } from &quot;@react-three/fiber&quot;;
+import * as THREE from &quot;three&quot;;
+import { lauf } from &quot;@/components/erlebnis/lauf&quot;;
+import { klemm } from &quot;@/components/erlebnis/zeitachse&quot;;
+
+/* three-Objekte auf MODULEBENE — nicht in useMemo/useRef (Lint, s. 7). */
+const mat = new THREE.MeshBasicMaterial({ color: &quot;#E0472A&quot;, transparent: true, opacity: 0, depthWrite: false });
+const ring = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.05, 6, 64), mat);
+ring.rotation.x = Math.PI / 2;
+
+export default function Hoehenring() {
+  /* Kamera aus dem Frame-Zustand, nicht aus useThree. */
+  useFrame(({ camera }) =&gt; {
+    mat.opacity = lauf.wechsel * 0.9;   // mit dem Seitenwechsel einblenden
+    ring.position.y = klemm(camera.position.y, 1, 60);
+  });
+  return &lt;primitive object={ring} /&gt;;
+}
+</code></pre>
+<p>Bir Zusatz&#39;ın <code>lauf</code>&#39;tan okuyabilecekleri:</p>
+<div class="tablo"><table>
+<thead>
+<tr>
+<th>Alan</th>
+<th>Anlamı</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>lauf.T</code></td>
+<td>sayfanın anlatı zamanı</td>
+</tr>
+<tr>
+<td><code>lauf.szeneT</code></td>
+<td>sahnenin anlatı zamanı (L0/L1: 0)</td>
+</tr>
+<tr>
+<td><code>lauf.uhr</code></td>
+<td>saat (gece renkleri için <code>istNacht(lauf.uhr)</code>)</td>
+</tr>
+<tr>
+<td><code>lauf.szene</code></td>
+<td>güncel sahne durumu (tüm Spuren, yumuşatılmış)</td>
+</tr>
+<tr>
+<td><code>lauf.wechsel</code></td>
+<td>sayfa geçişinden sonraki saniyede 0 → 1</td>
+</tr>
+<tr>
+<td><code>lauf.ruhig</code></td>
+<td>reduced motion</td>
+</tr>
+<tr>
+<td><code>lauf.anker[id]</code></td>
+<td>ankerlerin ekran konumu <code>{x, y, da}</code> (4.9)</td>
+</tr>
+<tr>
+<td><code>lauf.partitur</code></td>
+<td>güncel Partitur</td>
+</tr>
+</tbody></table></div>
+<p>Zusatz yalnızca <code>lauf.anker</code> içine, kendi kayıtlarını yazabilir (sayfa
+önekli id&#39;ler, ör. <code>standards-gondel</code>). Böylece metin tarafı <code>fokus</code> ile
+oraya kılavuz çizgi çekebilir. Parçalara aynı anda birden fazla etiket
+için <code>@react-three/drei</code>&#39;deki <code>Html</code> uygundur (<code>pointer-events: none</code>,
+<code>aria-hidden</code>); metin yine de SSR HTML&#39;inde bulunmalı.</p>
+<p>Türbin <code>massstab</code> ile büyür; ona bağlı her şey yükseklikleri
+<code>lauf.szene.massstab</code> ile çarpar.</p>
+<h3 id="sayfa-api-4-9-ankerler">4.9 Ankerler</h3>
+<p><code>lauf.anker[id] = { x, y, da }</code>: CSS pikseli olarak ekran konumu, <code>da</code> =
+kameranın önünde mi. Her karede yenilenir (<code>Anlage.tsx</code>).</p>
+<div class="tablo"><table>
+<thead>
+<tr>
+<th>id</th>
+<th>Yer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rotorblaetter</code></td>
+<td>üst kanadın ortası (dönerek)</td>
+</tr>
+<tr>
+<td><code>spitze</code></td>
+<td>üst kanadın ucu (dönerek)</td>
+</tr>
+<tr>
+<td><code>nabe</code></td>
+<td>göbeğin önü</td>
+</tr>
+<tr>
+<td><code>getriebe</code></td>
+<td>naseldeki dişli kutusu</td>
+</tr>
+<tr>
+<td><code>generator</code></td>
+<td>naseldeki jeneratör</td>
+</tr>
+<tr>
+<td><code>gondel</code></td>
+<td>nasel çatısı</td>
+</tr>
+<tr>
+<td><code>turm</code></td>
+<td>kule, 24 m</td>
+</tr>
+<tr>
+<td><code>fuss</code></td>
+<td>kapıdaki kule tabanı</td>
+</tr>
+<tr>
+<td><code>fundament</code></td>
+<td>temelin kenarı</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="sayfa-api-5-takt-attributelari-metin">5. Takt attribute&#39;ları (metin)</h2>
+<div class="tablo"><table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Nerede</th>
+<th>Etkisi</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>data-takt=&quot;a b&quot;</code></td>
+<td>sabit sahnedeki blok</td>
+<td>sabit yolun a ile b arası (0–1) görünür; opaklık + 26 px kayma. <code>a ≤ 0</code>: baştan görünür; <code>b ≥ 1</code>: sona kadar kalır. İç içe kullanılabilir (maddeleri sırayla gelen liste).</td>
+</tr>
+<tr>
+<td><code>data-strecke=&quot;a b&quot;</code></td>
+<td><code>e-fuellung</code> taşıyan eleman</td>
+<td>a ile b arasında <code>scaleX</code> 0 → 1 (çubuklar, zaman çizelgeleri)</td>
+</tr>
+<tr>
+<td><code>data-zahl=&quot;96&quot;</code></td>
+<td>takt içinde</td>
+<td>takt girerken 0&#39;dan sayar</td>
+</tr>
+<tr>
+<td><code>data-mass=&quot;60&quot;</code></td>
+<td>metin</td>
+<td><code>60 × massstab</code> gösterir (60 → 120)</td>
+</tr>
+<tr>
+<td><code>data-upm</code></td>
+<td>metin</td>
+<td>güncel rotor devri</td>
+</tr>
+<tr>
+<td><code>data-teil=&quot;id&quot;</code></td>
+<td>takt</td>
+<td>bu id&#39;li <code>fokus</code> için kılavuz çizginin hedefi</td>
+</tr>
+<tr>
+<td><code>data-zeilen</code></td>
+<td><code>Zeilen</code> üzerinden</td>
+<td>kelime kelime giriş</td>
+</tr>
+</tbody></table></div>
+<p><strong>Başlık açılışı</strong> (<code>Zeilen</code>): yalnızca sayfanın büyük anları için
+(Auftakt&#39;taki H1, en fazla bir iki başlık daha). Her yerde kullanılırsa
+etkisini kaybeder. <code>kante</code> tek bir sayıyı ya da kelimeyi bir kenarın
+arkasından yükseltir (<code>zahl</code> ile ayrıca sayar).</p>
+<p>Sahnedeki yerleşim: bir sahnenin çocukları üst üste durur (grid), her
+blok <code>e-block</code>. Geniş blok: <code>e-block e-block-breit</code>. Tam genişlikte
+zaman çizelgesi için <code>seite=&quot;unten&quot;</code> + <code>e-block e-block-voll</code>.</p>
+<hr>
+<h2 id="sayfa-api-6-bausteine">6. Bausteine</h2>
+<p>Hepsi <code>@/components/erlebnis/bausteine</code>&#39;den (server bileşeni,
+<code>Anmeldung</code> hariç).</p>
+<div class="tablo"><table>
+<thead>
+<tr>
+<th>Baustein</th>
+<th>Props</th>
+<th>Amaç</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Kapitel</code></td>
+<td><code>partitur, id, seite?: &quot;links&quot; | &quot;rechts&quot; | &quot;unten&quot;, children</code></td>
+<td>sabit sahne (sticky, <code>hoehe</code> ve <code>luft</code> Partitur&#39;dan)</td>
+</tr>
+<tr>
+<td><code>Auftakt</code></td>
+<td><code>partitur, kapitel, titel, lead?, takt? = &quot;0 0.15&quot;, angabe?, children?</code> (butonlar)</td>
+<td>ilk takt: Marke &quot;01 · ölçü · sayfa adı&quot;, kelime kelime H1, lead</td>
+</tr>
+<tr>
+<td><code>Marke</code></td>
+<td><code>partitur, id, angabe?, children?</code></td>
+<td>&quot;03 — 15:20 — Ad&quot;; bilgi = <code>angabe</code> › <code>kapitel.marke</code> › <code>uhr</code></td>
+</tr>
+<tr>
+<td><code>Zeilen</code></td>
+<td><code>as?, className, text, kante?, auftakt?, zahl?</code></td>
+<td>kelime kelime başlık</td>
+</tr>
+<tr>
+<td><code>Weiter</code></td>
+<td><code>href, children</code></td>
+<td>oklu metin linki</td>
+</tr>
+<tr>
+<td><code>Datenblatt</code></td>
+<td><code>partitur, id, etikett?, titel?, children</code></td>
+<td>kâğıt zeminde akan bölüm</td>
+</tr>
+<tr>
+<td><code>Abschnitt</code></td>
+<td><code>titel, etikett?, children?</code></td>
+<td>Datenblatt içinde ara başlık</td>
+</tr>
+<tr>
+<td><code>Tabelle</code></td>
+<td><code>nr?, titel?, zeilen: {schluessel, wert}[]</code></td>
+<td>anahtar-değer / özellik bloğu</td>
+</tr>
+<tr>
+<td><code>Liste</code></td>
+<td><code>punkte: {titel, text?}[]</code></td>
+<td>01, 02 … numaralı liste</td>
+</tr>
+<tr>
+<td><code>Fragen</code></td>
+<td><code>fragen: {q, a}[]</code></td>
+<td><code>&lt;details&gt;</code> ile SSS</td>
+</tr>
+<tr>
+<td><code>Abspann</code></td>
+<td><code>partitur, pfad, titel, lead?, id? = &quot;abspann&quot;, marke? = &quot;Contact&quot;, weiter? = true | false | Station</code></td>
+<td>kapı + CTA + iletişim + footer</td>
+</tr>
+<tr>
+<td><code>Tuer</code></td>
+<td><code>station</code></td>
+<td>&quot;NEXT — SERVICES · HEADING …&quot; (Abspann içinde)</td>
+</tr>
+<tr>
+<td><code>Anmeldung</code></td>
+<td><code>partitur</code></td>
+<td>client: Partitur&#39;u kaydeder (yalnızca <code>Buehne.tsx</code>&#39;te)</td>
+</tr>
+</tbody></table></div>
+<p>Kapı sonraki durağı <code>rundgang.ts</code>&#39;ten alır: <code>/</code> → <code>/services</code> →
+<code>/services/acquisition</code> → <code>/services/maintenance</code> →
+<code>/services/monitoring</code> → <code>/services/planning-repowering</code> →
+<code>/references</code> → <code>/company</code> → <code>/company/team</code> → <code>/company/standards</code> →
+<code>/company/partners-investors</code> → <code>/company/careers</code> → <code>/insights</code> →
+<code>/contact</code> → <code>/</code>. <code>/insights/…</code> yazıları <code>/contact</code>&#39;a, <code>/contact/…</code>
+formları ana sayfaya gider. Listede olmayan bir yol için kapı çıkmaz;
+yeni bir sayfa tura girecekse onu <code>rundgang</code> dizisine ekle.</p>
+<p><strong>Metin için CSS sınıfları</strong> (<code>erlebnis.css</code>): <code>e-titel</code> +
+<code>e-titel-xl|l|m|s</code>, <code>e-text</code>, <code>e-lead</code>, <code>e-klein</code>, <code>e-etikett</code>,
+<code>e-riesig</code> (büyük rakam), <code>e-liste</code> (çizgili liste), <code>e-liste-gross</code>,
+<code>e-schritte</code> (numaralı satırlar), <code>e-zitat</code>, <code>e-knoepfe</code> + <code>e-knopf</code> /
+<code>e-knopf-voll</code>, <code>e-fakten</code> / <code>e-spez</code> / <code>e-mass</code> (değer satırları),
+<code>e-fussnote</code>, <code>e-signal</code>, <code>tnum</code> (eşit genişlikte rakam), <code>e-jahre</code> +
+<code>e-fuellung</code> (<code>data-strecke</code> ile çubuk), <code>e-zeitleiste</code> (beş adım,
+ana sayfadaki örnek gibi).</p>
+<p>Kenarlar: sahnelerdeki, Datenblatt&#39;taki ve Abspann&#39;daki metin üst barın
+altında ve HUD&#39;ın üstünde yumuşakça kaybolur (<code>e-fliesst</code> ya da
+<code>e-buehne</code>; Bausteine bunu kendisi koyar). Bausteine dışındaki kendi
+akan alanların, bölümün iç elemanında <code>className=&quot;e-fliesst&quot;</code> alır.</p>
+<hr>
+<h2 id="sayfa-api-7-ornek-en-kucuk-l2-sayfa">7. Örnek: en küçük L2 sayfa</h2>
+<p>Yalnızca geliştirme modunda <strong><code>/patterns</code></strong> altında çalışır (build&#39;de
+404, <code>noindex</code>). Dosyalar <code>src/app/(site)/patterns/</code> içinde: yeni bir
+sayfaya buradan kopyalayarak başla.</p>
+<ul>
+<li><code>partitur.ts</code>: üç bölüm (<code>aufstieg</code> sabit sahne <code>hoehe: 4</code>, <code>daten</code>
+Datenblatt, <code>abspann</code>), <code>zeitraster</code> ile kamera yolu, bir <code>drehzahl</code>
+Spur&#39;u, yükseklik gösteren <code>hud</code>, <code>zusatz: Hoehenring</code>.</li>
+<li><code>Buehne.tsx</code>: bölüm 2&#39;deki gibi.</li>
+<li><code>Hoehenring.tsx</code>: bölüm 4.8&#39;deki gibi.</li>
+<li><code>page.tsx</code>: <code>&lt;Buehne /&gt;</code>, ardından HTML&#39;de Partitur&#39;daki sırayla
+<code>Kapitel</code> (içinde <code>Auftakt</code> ve <code>data-takt</code> blokları), <code>Datenblatt</code>
+(<code>Abschnitt</code>, <code>Fragen</code>, <code>Tabelle</code>, <code>Liste</code>) ve <code>Abspann</code>.</li>
+</ul>
+<p>Örnek sayfa ayrıca production build&#39;de <code>notFound()</code> çağırır ve
+<code>robots: noindex</code> koyar; gerçek sayfaların buna ihtiyacı yok.</p>
+<p>Gerçek sayfaların metadata&#39;sı: <code>title</code>, <code>description</code> ve
+<code>alternates.canonical</code> (sayfanın kendi yolu). İçerik dosyalarında <code>seo</code>
+alanı varsa (<code>src/content/leistungen.ts</code>, <code>src/content/wissen.ts</code>) oradan
+al.</p>
+<p>Metin <code>src/content/*.ts</code> içinde durur; sayfa onu okur, kendisi metin
+tutmaz. Takt metni: başlık ≤ ~9 kelime, gövde ≤ ~45 kelime; daha uzun
+içerik Datenblatt&#39;a gider (kısaltma, taşı).</p>
+<hr>
+<h2 id="sayfa-api-8-kod-kurallari">8. Kod kuralları</h2>
+<ul>
+<li><strong>Yorumlar ve tanımlayıcılar Almanca</strong>, mevcut dosyaların üslubunda.
+Yorum <em>neden</em>i açıklar.</li>
+<li><strong>Yeni npm bağımlılığı yok.</strong> Scroll için Lenis zaten var (sahne
+yönetir); <code>@react-three/drei</code> kurulu.</li>
+<li><strong><code>useFrame</code> içinde değiştirilen three nesneleri</strong> (materyal,
+geometri, vektör, renk, mesh) <strong>modül seviyesinde</strong> kurulur,
+<code>useMemo</code>/<code>useState</code> içinde değil: <code>react-hooks/immutability</code> lint
+kuralı hook değerlerinin değiştirilmesini yasaklar. <code>useRef</code> yalnızca
+JSX nesnelerine ref için.</li>
+<li><strong>Kamera ve <code>size</code>&#39;ı <code>useFrame</code> durumundan al</strong>
+(<code>useFrame(({ camera, size }) =&gt; …)</code>), <code>useThree</code>&#39;den değil.</li>
+<li>Her karede değişen React state yok. Karede yalnızca <code>lauf</code> oku, three
+nesnelerine ve DOM stillerine yaz.</li>
+<li><strong>Erişilebilirlik:</strong> tüm metin SSR HTML&#39;inde (server bileşenleri),
+hareket yalnızca opaklık/transform ile. <code>prefers-reduced-motion</code>&#39;ı
+sahne halleder; kendi CSS animasyonların bir
+<code>@media (prefers-reduced-motion: reduce)</code> dalı ister. Başlık
+hiyerarşisi: tam bir <code>h1</code> (Auftakt&#39;ta), altında <code>h2</code>/<code>h3</code>.</li>
+</ul>
+<hr>
+<h2 id="sayfa-api-9-kontrol">9. Kontrol</h2>
+<ol>
+<li><code>npm run typecheck</code> temiz.</li>
+<li><code>npx eslint &lt;kendi dosyaların&gt;</code> temiz.</li>
+<li><code>npm run dev</code>, sayfayı aç. Konsolda <code>[Bühne]</code> uyarısı ve hata yok
+(R3F&#39;ten gelen &quot;THREE.Clock … deprecated&quot; uyarısı bilinen bir durum).</li>
+<li>Her bölümü masaüstünde (1440×900) <strong>ve</strong> mobilde (390×844) baştan
+sona scroll et. Bak: metin hiç logo/HUD altına girmiyor, türbin metnin
+arkasında kalmıyor, gece bölümlerinde metin açık renk, yatay taşma yok.</li>
+<li>Sayfa geçişi: ana sayfadan (logo linki) kendi sayfana ve geri. Kamera
+uçar, sayfa en üstten başlar, bölüm rayı kendi bölümlerini gösterir.</li>
+</ol>
+  </article>
+
+
+
+  <footer class="son">Kod MIT lisanslı. Firma adı, kişiler ve adresler kurgusal yer tutucular.</footer>
+</main>
+
+<script>
+(function () {
+  var bolumler = document.querySelectorAll("[data-bolum]");
+  var sekmeler = document.querySelectorAll("[data-sekme]");
+  var adlar = Array.prototype.map.call(bolumler, function (b) { return b.id; });
+  function goster(ad, kaydir) {
+    var hedef = ad;
+    if (adlar.indexOf(ad) < 0) {
+      var el = ad && document.getElementById(ad);
+      var kap = el && el.closest("[data-bolum]");
+      hedef = kap ? kap.id : "ozet";
+    }
+    bolumler.forEach(function (b) { b.hidden = b.id !== hedef; });
+    sekmeler.forEach(function (s) {
+      if (s.dataset.sekme === hedef) s.setAttribute("aria-current", "page");
+      else s.removeAttribute("aria-current");
+    });
+    if (kaydir) {
+      if (ad !== hedef && document.getElementById(ad)) document.getElementById(ad).scrollIntoView();
+      else window.scrollTo(0, 0);
+    }
+  }
+  window.addEventListener("hashchange", function () { goster(location.hash.slice(1), true); });
+  goster(location.hash.slice(1), false);
+})();
+</script>
+</body>
+</html>

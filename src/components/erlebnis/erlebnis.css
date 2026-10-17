@@ -174,14 +174,14 @@
   gap: 32px;
   padding: 18px var(--rand);
 }
-/* Logo: Textwortmarke in fester Box, Tag- und Nachtfassung deckungsgleich
-   darin (siehe Erlebnis.tsx). Tag: Tinte, Nacht: Papier. */
+/* Logo: Textwortmarke. Die Tagfassung gibt der Box ihre Breite, die
+   Nachtfassung liegt deckungsgleich darüber (siehe Erlebnis.tsx).
+   Tag: Tinte, Nacht: Papier. */
 .e-logo {
   position: relative;
   display: block;
   flex: none;
   height: 34px;
-  aspect-ratio: 3 / 1;
   text-decoration: none;
 }
 .e-logo-tag,
@@ -203,7 +203,7 @@
 .e-logo-nacht b { font-weight: 800; font-stretch: 112%; }
 .e-logo-tag span,
 .e-logo-nacht span { font-weight: 500; font-stretch: 112%; }
-.e-logo-tag { color: var(--tinte); }
+.e-logo-tag { position: relative; height: 100%; color: var(--tinte); }
 .e-logo-tag span { color: var(--signal); }
 .e-logo-nacht { color: var(--papier); opacity: 0; }
 .e-logo-nacht span { color: #F08A6E; }
@@ -233,6 +233,8 @@
 }
 @media (max-width: 767px) {
   .e-logo { height: 28px; }
+  .e-logo-tag,
+  .e-logo-nacht { font-size: 11.5px; letter-spacing: 0.12em; }
   .e-kopf-uhr { display: inline-flex; }
 }
 .e-nav {
@@ -926,7 +928,7 @@
   .e-fakten { grid-template-columns: 1fr 1fr; }
   .e-knopf { padding: 12px 18px; }
   .e-kopf { padding: 14px var(--rand); }
-  /* Logo, Uhr und Knopf in einer Zeile; ab 390 px mit Kapitelzahl. */
+  /* Logo, Uhr und Knopf in einer Zeile; ab 430 px mit Kapitelzahl. */
   .e-kopf { gap: 12px; }
   .e-kopf .e-knopf { white-space: nowrap; padding: 9px 14px; font-size: 12.5px; }
   .e-kopf-uhr { margin-left: 0; padding-left: 10px; font-size: 17px; gap: 6px; }
@@ -940,12 +942,16 @@
   .e-kopf-kap { flex: none; }
   .e-kopf-uhr[data-lang="1"] .e-kopf-kap { display: none; }
 }
-/* Schmale Telefone (360 px und weniger): Die Kapitelzahl weicht, Uhrzeit
-   und Knopf bleiben ganz sichtbar und halten rechts den Rand. */
-@media (max-width: 379px) {
+/* Telefone unter 430 px: Die Kapitelzahl weicht, Uhrzeit und Knopf
+   bleiben ganz sichtbar und halten rechts den Rand. */
+@media (max-width: 429px) {
   .e-kopf-kap { display: none; }
   .e-kopf { gap: 10px; }
   .e-kopf .e-knopf { padding: 9px 12px; }
+}
+/* Unter 360 px reicht die Zeile nicht für Logo, Uhr und Knopf: Die Uhr entfällt. */
+@media (max-width: 359px) {
+  .e-kopf-uhr { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

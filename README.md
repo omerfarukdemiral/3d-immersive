@@ -7,6 +7,8 @@ yükselir ve kafes elektrik direkleriyle birbirine bağlanır.
 
 **Canlı:** https://omerfarukdemiral.github.io/3d-immersive/
 
+**Rehber:** https://omerfarukdemiral.github.io/3d-immersive/guide/
+
 **Model dosyası yok.** Türbin, santraller, direkler ve kablolar
 tamamen kodla üretiliyor. Model indirme: 0 MB.
 
@@ -81,6 +83,10 @@ Adrese `?debug` eklersen anlık kamera konumu `window.__kamera`
 - [`docs/02-promptlar.md`](docs/02-promptlar.md): faz faz örnek promptlar
 - [`docs/03-tricks.md`](docs/03-tricks.md): Three.js, prosedürel model ve scroll trick'leri
 - [`docs/04-sayfa-api.md`](docs/04-sayfa-api.md): yeni bir alt sayfa eklemek
+
+Aynı dört doküman sitede `/guide/` altında tek sayfa olarak da okunabilir.
+`docs/` değişince `npm run rehber` ile `public/guide/index.html`
+yeniden üretilir.
 
 `AGENTS.md` ve `CLAUDE.md` Next.js'in AI asistanlar için ürettiği
 dosyalar; `next dev` onları yeniden yazar.
