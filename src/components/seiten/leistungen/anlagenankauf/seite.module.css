@@ -1,0 +1,90 @@
+/*
+ * Ankauf: Lasten-Etiketten am Turm (Lasten.tsx).
+ *
+ * Lasten.tsx schreibt pro Bild drei Größen: --u (0 = Sie, 1 = Wir),
+ * --x (Abstand des Schilds vom Turm in px, links negativ) und --y
+ * (Abschied nach oben). Alles Weitere folgt hier daraus — die Schleife
+ * fasst nur Deckkraft und Variablen an, nie das Layout.
+ */
+
+.etikett {
+  --u: 0;
+  --x: -54px;
+  --y: 0px;
+  --farbe: color-mix(in srgb, var(--signal) calc(var(--u) * 100%), var(--text-3));
+  position: relative;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  transform: translateY(var(--y));
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Linie vom Turm zum Schild, auf der Seite, auf der das Schild steht. */
+.linie {
+  position: absolute;
+  top: 0;
+  left: min(0px, var(--x));
+  width: max(var(--x), calc(var(--x) * -1));
+  height: 1px;
+  background: var(--farbe);
+}
+
+.punkt {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--farbe);
+}
+
+/* Links vom Turm hängt das Schild mit seiner rechten Kante an der Linie,
+   rechts mit der linken: Die Verschiebung um (u − 1) · 100 % der eigenen
+   Breite klappt es beim Wechsel weich auf die andere Seite. */
+.schild {
+  position: absolute;
+  top: 0;
+  left: var(--x);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 9px 5px;
+  white-space: nowrap;
+  transform: translate(calc((var(--u) - 1) * 100%), -50%);
+  background: color-mix(in srgb, var(--papier) 82%, transparent);
+  border: 1px solid var(--farbe);
+  color: var(--text);
+  font-stretch: 118%;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* „Sie" und „Wir" liegen übereinander und blenden ineinander. */
+.wer {
+  display: grid;
+  color: var(--farbe);
+}
+.wer > * { grid-area: 1 / 1; }
+.sie { opacity: calc(1 - var(--u)); }
+.wir { opacity: var(--u); }
+
+.last { color: var(--text); }
+
+/* Nachts wäre die helle Papierfläche ein Loch im Himmel. */
+:global(.erlebnis[data-nacht="1"]) .schild {
+  background: color-mix(in srgb, var(--tinte) 70%, transparent);
+}
+
+@media (max-width: 767px) {
+  .schild {
+    gap: 6px;
+    padding: 4px 6px 3px;
+    font-size: 9px;
+  }
+}

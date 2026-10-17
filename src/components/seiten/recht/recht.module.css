@@ -1,0 +1,368 @@
+/*
+ * Eigene Stile der Rechtsseiten und der 404. Tokens (--papier, --tinte, --linie, --rand …) kommen aus
+ * .erlebnis. Nur, was die Bausteine nicht haben: das deckende Papier, der
+ * zweispaltige Abschnitt (Nummer und Titel links, Text rechts), das
+ * Inhaltsverzeichnis und die Lage des 404-Textes neben dem Fundament.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Papier: Impressum und Datenschutz haben keine Szene                 */
+/* ------------------------------------------------------------------ */
+
+/* Liegt in <main> (eigener Stapel über der Szene, erlebnis.css) ganz
+   unten: deckt Himmel und Anlage, bleibt aber unter dem Text. Kopfleiste
+   und HUD stehen außerhalb von <main> und bleiben darüber. Beim Wechsel
+   von einer Szenenseite blendet es kurz ein — die Kamera fährt dahinter
+   noch zu Ende, man sieht die Szene zurücktreten statt abreißen. */
+.papier {
+  position: fixed;
+  inset: 0;
+  height: 100lvh;
+  z-index: -1;
+  background: var(--papier);
+  pointer-events: none;
+  animation: papier-ein 700ms ease both;
+}
+@keyframes papier-ein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .papier { animation: none; }
+}
+
+/* Säume: Text, der unter die Kopfleiste oder über das HUD wandert,
+   verschwindet in Papierfarbe, statt unter Logo und Messzeile
+   durchzulaufen. Das Papier ist deckend — ein Verlauf in seiner Farbe
+   wirkt darum genau wie die Kantenmaske der Bühne (erlebnis.css,
+   --kante-*), ist aber fest im Bild und gilt für jeden Abschnitt, auch
+   für die, deren Maske die Bühne gerade nicht nachführt. Liegt über dem
+   Text (z-index 1), unter Kopfleiste und HUD (außerhalb von <main>). */
+.saum {
+  --oben-weg: 64px;
+  --oben-da: clamp(104px, 15vh, 140px);
+  /* Unten: bis über die zweite HUD-Zeile ganz Papier, dann ein kurzer
+     Auslauf — Fußzeile und Kontakt des Abspanns stehen im letzten Bild
+     knapp darüber und sollen lesbar bleiben. */
+  --unten-weg: 60px;
+  --unten-da: 92px;
+  /* Papier ohne Deckung statt `transparent`: kein Grauschleier im
+     Verlauf. */
+  --papier-weg: color-mix(in srgb, var(--papier) 0%, transparent);
+  position: fixed;
+  inset: 0;
+  height: 100lvh;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--papier) var(--oben-weg),
+    var(--papier-weg) var(--oben-da),
+    var(--papier-weg) calc(100% - var(--unten-da)),
+    var(--papier) calc(100% - var(--unten-weg))
+  );
+  animation: papier-ein 700ms ease both;
+}
+@media (max-width: 767px) {
+  /* Mobil: Kopfleiste bis ~52 px, unten nur der Fortschrittsbalken. */
+  .saum {
+    --oben-weg: 64px;
+    --oben-da: 120px;
+    --unten-weg: 0px;
+    --unten-da: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .saum { animation: none; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Leselinie: welches Kapitel gerade gilt                              */
+/* ------------------------------------------------------------------ */
+
+/* Die Bühne zählt ein Kapitel ab dem Moment, in dem die Oberkante
+   seines Abschnitts den oberen Fensterrand erreicht. Bei den kurzen
+   Rechtsabschnitten stünde dann in Schiene und HUD ein Kapitel, das
+   längst aus dem Bild ist. Darum reicht jeder Abschnitt nach dem ersten
+   unsichtbar um `--lese` nach oben über seinen Vorgänger: Er gilt, sobald
+   seine Überschrift die Leselinie (30 % der Fensterhöhe, höchstens
+   260 px) kreuzt. Tiefer darf sie nicht liegen: Nach einem Sprung steht
+   die Überschrift bei 120 px, und der nächste, oft nur 200 px hohe
+   Abschnitt darf die Linie dann noch nicht erreicht haben — sonst
+   zeigten Schiene und HUD nach dem Sprung schon das folgende Kapitel.
+
+   Der Überstand ist leer und durchlässig (pointer-events), damit Links
+   am Ende des vorigen Abschnitts klickbar bleiben. Der Abspann (Baustein,
+   .e-schluss) bekommt dieselbe Leselinie über seinen Platz in .lesen. */
+.lesen {
+  --lese: min(30vh, 260px);
+}
+.lesen > section + section {
+  margin-top: calc(-1 * var(--lese));
+  padding-top: var(--lese);
+  pointer-events: none;
+  /* Sprünge (Verzeichnis, Kapitelschiene) legen die Überschrift knapp
+     unter die Kopfleiste, nicht den leeren Überstand. */
+  scroll-margin-top: calc(var(--kante-sprung, 120px) - var(--lese));
+}
+.lesen > section + section > * {
+  pointer-events: auto;
+}
+/* Der Abspann hat oben eigenen Abstand (erlebnis.css): Überstand dazu. */
+.lesen > section + :global(.e-schluss) {
+  padding-top: calc(140px + var(--lese));
+}
+
+/* Papier ist immer hell: Tinte darauf (wie im Datenblatt). */
+.blatt {
+  position: relative;
+  padding: 0 var(--rand);
+  --text: var(--tinte);
+  --text-2: rgb(18 20 23 / 0.72);
+  --text-3: rgb(18 20 23 / 0.5);
+  --linie: rgb(18 20 23 / 0.18);
+  color: var(--text);
+}
+.innen {
+  max-width: 1040px;
+}
+/* Rechts steht die Kapitelschiene (erlebnis.css: ab 1024 × 640 px).
+   Ihr aufgedecktes Etikett darf nicht in den Text laufen: Die Spalte
+   endet mindestens `--schiene` (Blatt.tsx, aus dem längsten Titel) vor
+   dem rechten Fensterrand. 100 % ist die Breite zwischen den Rändern,
+   + --rand gibt den Abstand bis zur Fensterkante zurück. */
+@media (min-width: 1024px) and (min-height: 640px) {
+  .innen {
+    max-width: min(1040px, calc(100% + var(--rand) - var(--schiene, 420px)));
+  }
+}
+
+/* Erster Abschnitt: Marke, H1, Lead — ganz unter der Blendzone der
+   Kopfleiste (erlebnis.css, --kante-oben-voll). */
+.kopf {
+  padding-top: clamp(150px, 24vh, 240px);
+  padding-bottom: clamp(56px, 9vh, 96px);
+}
+.kopf .lead {
+  margin-top: 26px;
+}
+/* Ein einziges langes Wort („Datenschutzerklärung") muss auch auf
+   360 px in eine Zeile passen — Archivo schmal trägt das bei ~9,5vw. */
+.titel {
+  max-width: none;
+}
+@media (max-width: 767px) {
+  .titel {
+    font-size: clamp(2.2rem, 9.6vw, 4rem);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Abschnitt: Nummer und Titel links, Text rechts                      */
+/* ------------------------------------------------------------------ */
+
+.abschnitt {
+  padding: 20px 0 clamp(48px, 8vh, 80px);
+  border-top: 1px solid var(--tinte);
+}
+.raster {
+  display: grid;
+  gap: 14px 48px;
+}
+/* Zwei Spalten erst, wenn rechts daneben noch eine lesbare Textspalte
+   bleibt — mit der Schiene daneben ist die Spalte schmaler als das
+   Fenster (Containerabfrage statt Fensterbreite). */
+.abschnitt {
+  container-type: inline-size;
+}
+@container (min-width: 720px) {
+  .raster {
+    grid-template-columns: minmax(180px, 16rem) minmax(0, 1fr);
+  }
+}
+.nr {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--signal);
+  font-weight: 700;
+}
+.abschnitt h2 {
+  max-width: 16ch;
+}
+.abschnitt .text {
+  max-width: 68ch;
+  font-size: 16.5px;
+  line-height: 1.7;
+}
+.abschnitt .text:first-child {
+  margin-top: 0;
+}
+.abschnitt a {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--linie);
+  transition: border-color 200ms;
+}
+.abschnitt a:hover {
+  border-color: var(--signal);
+}
+/* Schlusszeile unter dem letzten Abschnitt („Fragen zum Datenschutz …"). */
+.nachsatz {
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid var(--linie);
+  color: var(--text-3);
+}
+
+/* ------------------------------------------------------------------ */
+/* Inhaltsverzeichnis (Datenschutz)                                    */
+/* ------------------------------------------------------------------ */
+
+/* Auf breiten Fenstern führt zusätzlich die Kapitelschiene rechts;
+   mobil gibt es sie nicht, dort trägt dieses Verzeichnis allein. */
+.verzeichnis {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--linie);
+  columns: 2;
+  column-gap: 48px;
+}
+@media (max-width: 639px) {
+  .verzeichnis {
+    columns: 1;
+  }
+}
+.verzeichnis li {
+  break-inside: avoid;
+  border-bottom: 1px solid var(--linie);
+}
+.verzeichnis a {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  padding: 11px 0;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 15.5px;
+  transition: color 200ms;
+}
+.verzeichnis a:hover {
+  color: var(--signal);
+}
+.verzeichnis .nr {
+  display: inline;
+  margin: 0;
+  min-width: 2ch;
+}
+
+/* ------------------------------------------------------------------ */
+/* 404                                                                 */
+/* ------------------------------------------------------------------ */
+
+/* Der Text steht links in einer Fensterhöhe, das Fundament rechts
+   daneben (Kamera-`versatz` in partitur.ts). Ein weicher Hof in
+   Horizontfarbe hinter dem Text hält ihn lesbar, ohne die Ebene
+   abzudecken — die Szene ist hier der Inhalt. */
+.fehler {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: 120px var(--rand) 110px;
+}
+.fehler::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--horizont) 55%, transparent) 0%,
+    color-mix(in srgb, var(--horizont) 22%, transparent) 38%,
+    transparent 60%
+  );
+}
+.fehlerInnen {
+  max-width: 44rem;
+}
+.fehlerInnen .titel {
+  max-width: 11ch;
+}
+/* Gegen `.e-titel { margin: 0 }` aus erlebnis.css: eine Stufe genauer. */
+.fehlerInnen .zweit {
+  margin-top: 22px;
+}
+@media (max-width: 767px) {
+  /* Hochformat: Fundament oben, Text unten (wie die Bühnen). */
+  .fehler {
+    align-items: flex-end;
+    padding-bottom: 40px;
+  }
+  .fehler::before {
+    background: linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--horizont) 70%, transparent) 0%,
+      color-mix(in srgb, var(--horizont) 40%, transparent) 50%,
+      transparent 72%
+    );
+  }
+}
+
+/* Alle Bereiche: Navigation in Spalten, Untereinträge darunter. */
+.bereiche {
+  display: grid;
+  gap: 36px 48px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .bereiche {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .bereiche {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.bereiche > li {
+  padding-top: 18px;
+  border-top: 1px solid var(--tinte);
+}
+.bereiche ul {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.bereiche a {
+  color: var(--text);
+  text-decoration: none;
+  transition: color 200ms;
+}
+.bereiche a:hover {
+  color: var(--signal);
+}
+.bereiche ul a {
+  color: var(--text-2);
+  font-size: 15px;
+}
+.bereich {
+  font-stretch: 68%;
+  font-weight: 800;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  line-height: 1;
+}
+.fuss {
+  margin-top: 0;
+}
+
+/* Unter dem Lead: Angaben-Tabelle (Impressum) oder Verzeichnis
+   (Datenschutz). */
+.anhang {
+  margin-top: 48px;
+}

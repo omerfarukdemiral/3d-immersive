@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   Musterwerk Energie — Gestaltungssystem
+
+   Der Gegenstand: Anlagen, die andere abschreiben, bleiben am Netz.
+   Also Dauer, Substanz und Technik — nicht Start-up-Frische.
+
+   Zwei Schriften statt drei, kein Monospace mehr: Schibsted Grotesk
+   führt (Titel, Zahlen, Navigation), Source Serif trägt den Fließtext.
+   Die Serife gibt den langen Fachtexten Gewicht und unterscheidet die
+   Seite von der üblichen Sans-only-Unternehmensseite.
+------------------------------------------------------------------- */
+@theme {
+  /* Grundtöne: kühles Papier, kein Reinweiß, kein Cremeton */
+  --color-paper:      #F1F4F6;
+  --color-surface:    #FFFFFF;
+  --color-surface-2:  #E6EBEF;
+  --color-surface-3:  #D8DFE5;
+
+  --color-ink:        #10171E;
+  --color-ink-2:      #37424D;
+  --color-muted:      #6A7681;
+  --color-line:       #D2DAE1;
+  --color-line-2:     #B4C0CA;
+
+  /* Nachtblau statt Fast-Schwarz — Himmel über dem Windpark */
+  --color-deep:       #0B1826;
+  --color-deep-2:     #12263A;
+  --color-deep-line:  #1E3548;
+
+  /* Markenblau, vertieft */
+  --color-accent:     #0A54B8;
+  --color-accent-2:   #0E6BE0;
+  --color-accent-soft:#DEEAF9;
+  --color-accent-lift:#8CBAF3;
+
+  /* Warnmarkierung der Rotorblattspitze. Sparsam, dafür laut. */
+  --color-signal:     #C8402B;
+
+  --font-display: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+  --font-serif:   var(--font-source-serif), Georgia, "Times New Roman", serif;
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-serif);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Titel: eng gesetzt und schwer — die Höhe einer Anlage, nicht ihre Leichtigkeit */
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.03;
+    text-wrap: balance;
+  }
+
+  /* Zahlen laufen überall in gleicher Breite */
+  .tnum, table, dd, time { font-variant-numeric: tabular-nums; }
+
+  ::selection { background: var(--color-accent); color: #fff; }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  .shell { width: 100%; max-width: 1320px; margin-inline: auto; padding-inline: 22px; }
+  @media (min-width: 768px)  { .shell { padding-inline: 44px; } }
+  @media (min-width: 1280px) { .shell { padding-inline: 64px; } }
+
+  /* Fließtext: Serife verträgt etwas mehr Zeilenlänge als eine Grotesk */
+  .measure { max-width: 68ch; }
+
+  /* UI-Text (Buttons, Navigation, Beschriftungen) läuft in der Grotesk */
+  .ui { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.005em; }
+
+  /*
+   * Abschnittsmarke statt Eyebrow-Label.
+   * Ein kurzer senkrechter Strich links vom Titel — dieselbe Geste wie
+   * die Maßlinie einer technischen Zeichnung. Sie zeigt an, wo ein
+   * Abschnitt beginnt, ohne ihn zu betiteln.
+   */
+  .mark { position: relative; padding-left: 22px; }
+  .mark::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0.32em;
+    width: 3px; height: 1.05em;
+    background: var(--color-accent);
+  }
+  .mark-signal::before { background: var(--color-signal); }
+  .mark-light::before  { background: var(--color-accent-lift); }
+
+  /*
+   * Einblenden beim Erreichen (siehe components/util/Reveal.tsx).
+   *
+   * Kurzer Weg, langsame Kurve, kein Überschwingen: Die Bewegung soll
+   * auffangen, dass ein Abschnitt sonst fertig dasteht, bevor man ihn
+   * ansieht — sie soll nicht selbst auffallen. Deshalb auch nur Opazität
+   * und Verschiebung: Beides läuft im Compositor, ohne Layout anzufassen.
+   */
+  /* Nur dort verstecken, wo auch jemand wieder einblenden kann: Ohne
+     Skripte bleibt der Startzustand sichtbar, statt die Seite leer zu
+     lassen. Kennt ein Browser `scripting` nicht, fällt die Regel weg —
+     die Seite steht dann still da, aber vollständig. */
+  @media (scripting: enabled) {
+    .reveal {
+      opacity: 0;
+      transform: translate3d(0, 14px, 0);
+      transition:
+        opacity 620ms cubic-bezier(0.22, 0.61, 0.36, 1),
+        transform 620ms cubic-bezier(0.22, 0.61, 0.36, 1);
+      will-change: opacity, transform;
+    }
+    .reveal-an {
+      opacity: 1;
+      transform: none;
+      will-change: auto;
+    }
+  }
+
+  /*
+   * Bildeinzug: Das Bild steht schon da und wird aus der Maske
+   * freigegeben, statt einzublenden. Dazu fährt es aus einer leichten
+   * Vergrößerung in seinen Stand zurück — die Geste einer Kamera, die
+   * zur Ruhe kommt, nicht eines Elements, das aufploppt.
+   */
+  @media (scripting: enabled) {
+    /* Der Rahmen selbst bewegt sich nicht: Beim Bild soll die Maske
+       aufziehen, nicht der Kasten von unten hereinwandern. */
+    .bild-einzug {
+      opacity: 1;
+      transform: none;
+    }
+    .bild-einzug > * {
+      clip-path: inset(0 0 100% 0);
+      transform: scale(1.06);
+      transition:
+        clip-path 900ms cubic-bezier(0.22, 0.61, 0.36, 1),
+        transform 1400ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    /* Zwei Schreibweisen, damit `bild-einzug` sowohl direkt am
+       Reveal-Element als auch irgendwo darin stehen kann. */
+    .bild-einzug.reveal-an > *,
+    .reveal-an .bild-einzug > * {
+      clip-path: inset(0 0 0 0);
+      transform: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Dauer auf null genügt hier nicht: Der Startzustand selbst versteckt
+     den Inhalt. Also auch ihn aufheben. */
+  .reveal, .bild-einzug > * {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+}
+
+/* Lenis (weiches Scrollen, components/erlebnis/Erlebnis.tsx) */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}

@@ -1,0 +1,126 @@
+/*
+ * Eigene Stile der Standards-Seite. Tokens (--text, --signal, --linie …)
+ * kommen aus erlebnis.css unter .erlebnis.
+ */
+
+/* Der Satz, auf den es bei einem Punkt ankommt: größer als der Text,
+   mit Signalstrich — die Frage, die ein Betreiber stellen sollte. */
+.pruefen {
+  margin: 22px 0 0;
+  padding-left: 16px;
+  border-left: 2px solid var(--signal);
+  max-width: 30ch;
+  font-stretch: 78%;
+  font-weight: 600;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  color: var(--text);
+}
+
+/* Nachweise im Datenblatt: sechs Karten, zwei Spalten, Haarlinien. */
+.karten {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--tinte);
+}
+.karte {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px 28px 24px 0;
+  border-bottom: 1px solid var(--linie);
+}
+.karte:nth-child(even) {
+  padding: 22px 0 24px 28px;
+  border-left: 1px solid var(--linie);
+}
+.karteNr {
+  font-stretch: 118%;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--signal);
+}
+.karte :global(.e-text) { margin-top: 2px; }
+.anfordern {
+  margin-top: auto;
+  padding-top: 14px;
+  align-self: flex-start;
+  display: inline-flex;
+  gap: 10px;
+  align-items: baseline;
+  font-stretch: 118%;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+  text-decoration: none;
+  transition: gap 200ms, color 200ms;
+}
+.anfordern span:first-child {
+  border-bottom: 1px solid var(--linie);
+  padding-bottom: 3px;
+  transition: border-color 200ms;
+}
+.anfordern span:last-child { color: var(--signal); }
+.anfordern:hover { gap: 16px; }
+.anfordern:hover span:first-child { border-color: var(--signal); }
+
+@media (max-width: 767px) {
+  .karten { grid-template-columns: 1fr; }
+  .karte,
+  .karte:nth-child(even) { padding: 20px 0 22px; border-left: 0; }
+  .pruefen { font-size: 1.3rem; margin-top: 16px; }
+}
+
+/* Stift an der Zeichnung (Vorschriften.tsx, über drei/Html im Canvas).
+   Punkt sitzt genau auf dem Ansatzpunkt, die Beschriftung daneben. */
+.stift {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translate(-4px, -50%);
+  padding-left: 14px;
+  white-space: nowrap;
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  /* Keine Versalien: „BetrSichV" und „§ 16b BImSchG" sind Eigennamen,
+     in Großbuchstaben wären sie falsch geschrieben. */
+  font-stretch: 112%;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #121417;
+  transition: opacity 300ms ease;
+}
+.stift::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: #e0472a;
+}
+.stift > span:last-child {
+  padding: 3px 6px;
+  background: rgb(236 235 228 / 0.86);
+  border: 1px solid rgb(18 20 23 / 0.2);
+}
+.stiftNr { color: #e0472a; font-size: 10px; letter-spacing: 0.1em; }
+
+@media (max-width: 767px) {
+  .stift { font-size: 10px; letter-spacing: 0; }
+  .stiftNr { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stift { transition: none; }
+}

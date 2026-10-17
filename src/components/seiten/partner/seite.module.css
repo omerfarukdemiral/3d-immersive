@@ -1,0 +1,210 @@
+/* /company/partners-investors — eigene Stile. Tokens (--text,
+   --signal, --linie …) kommen von .erlebnis; hier nur, was die Bausteine nicht
+   schon mitbringen. */
+
+/* Auftakt: die vier Kennzahlen in einer Reihe, schmal und groß wie die
+   Kennwerte der Startseite. */
+.zahlen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 28px;
+  margin: 28px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--linie);
+}
+.zahlen > div {
+  display: flex;
+  flex-direction: column;
+}
+.zahlen dd {
+  order: -1;
+  margin: 0;
+  font-stretch: 62%;
+  font-weight: 800;
+  font-size: clamp(2.6rem, min(4.6vw, 8vh), 4.4rem);
+  line-height: 0.9;
+  color: var(--text);
+}
+.zahlen dt {
+  margin-top: 8px;
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--text-2);
+}
+
+/* Laufzeitbalken: 0–20 und 20–30 im Verhältnis der Jahre. */
+.laufzeit {
+  margin: 22px 0 4px;
+  max-width: 30rem;
+}
+.spuren {
+  display: flex;
+  gap: 3px;
+}
+.eeg {
+  flex: 20;
+}
+.weiter {
+  flex: 10;
+}
+.skala {
+  position: relative;
+  height: 1.4em;
+  margin-top: 8px;
+  font-stretch: 118%;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.skala span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.skala span:first-child {
+  transform: none;
+}
+.skala span:last-child {
+  transform: translateX(-100%);
+}
+
+/* Zwei Merkmale in einem Takt: untereinander, das zweite kommt nach. */
+.merkmal {
+  margin-top: 22px;
+}
+.merkmal :global(.e-titel) {
+  margin-top: 6px;
+}
+
+/* Datenraum: sechs Mappen, versiegelt. Schraffur statt Inhalt, ein
+   Stempel „Unter NDA" quer über der Ecke. */
+.mappen {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.mappe {
+  position: relative;
+  display: grid;
+  align-content: space-between;
+  gap: 18px;
+  min-height: 9.5rem;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--linie);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 7px,
+      color-mix(in srgb, var(--text) 6%, transparent) 7px 8px
+    ),
+    color-mix(in srgb, var(--papier) 72%, transparent);
+  overflow: hidden;
+}
+.mappeNr {
+  font-stretch: 118%;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+}
+.mappeTitel {
+  font-stretch: 75%;
+  font-weight: 700;
+  font-size: clamp(1.05rem, 1.3vw, 1.3rem);
+  line-height: 1.08;
+  color: var(--text);
+  hyphens: auto;
+}
+.siegel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 3px 7px 2px;
+  border: 1.5px solid var(--signal);
+  color: var(--signal);
+  font-stretch: 118%;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+}
+
+/* Jahreszahlen am Zeitband in der Szene (drei-Html, nur Bild). */
+.bandmarke {
+  font-family: inherit;
+  font-stretch: 118%;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #121417;
+  opacity: 0;
+  transition: color 300ms ease;
+}
+.bandmarke[data-erreicht="1"] {
+  color: #e0472a;
+}
+
+@media (max-width: 1023px) {
+  .mappen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .zahlen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+    margin-top: 20px;
+  }
+  .zahlen dd {
+    font-size: 2.6rem;
+  }
+  .zahlen dt {
+    font-size: 12.5px;
+  }
+  .mappe {
+    min-height: 0;
+    gap: 10px;
+    padding: 10px 12px 12px;
+  }
+  .mappeTitel {
+    font-size: 1rem;
+  }
+  .siegel {
+    position: static;
+    justify-self: start;
+    transform: none;
+    font-size: 8.5px;
+  }
+}
+
+/* Ohne Skript gibt es keine Takte: Merkmale ohne Versatz. */
+@media (scripting: none) {
+  .merkmal {
+    margin-top: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bandmarke {
+    transition: none;
+  }
+}
+
+/* Auftakt-Marke „01 — Betriebsjahr 0 — Partner & Investoren": Im
+   Hochformat bricht sie sonst mitten im Segment um („Betriebsjahr / 0").
+   Jedes Segment bleibt zusammen; umbrochen wird nur zwischen ihnen. */
+.auftakt :global(.e-marke) {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+.auftakt :global(.e-marke) > span {
+  white-space: nowrap;
+}

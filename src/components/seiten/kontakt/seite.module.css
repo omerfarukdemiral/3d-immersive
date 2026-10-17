@@ -1,0 +1,696 @@
+/* Kontaktseiten — eigene Stile. Tokens (--text, --signal, --linie,
+   --papier, --rand …) kommen von .erlebnis; hier nur, was die Bausteine nicht
+   mitbringen. Alle Klassen hängen unter den Wurzeln dieser Seiten. */
+
+/* ------------------------------------------------------------------ */
+/* Erster Abschnitt: fließt über der stillen Szene                     */
+/* ------------------------------------------------------------------ */
+
+.kopfteil {
+  --frei-oben: clamp(128px, 18vh, 176px);
+  position: relative;
+  min-height: 100svh;
+  padding: var(--frei-oben) var(--rand) clamp(72px, 10vh, 120px);
+}
+/* Zweiter Abschnitt auf /contact: fließt weiter, ohne Papierfläche. */
+.folgeteil {
+  position: relative;
+  padding: clamp(48px, 8vh, 96px) var(--rand) clamp(72px, 10vh, 120px);
+}
+/* Rechts bleibt Platz für die Kapitelschiene der Bühne. */
+.kopfInnen {
+  max-width: 1040px;
+}
+.h1 {
+  max-width: 16ch;
+}
+
+/* Text links der Anlage (Querformat). Die Partitur stellt den Turm auf
+   --anlage-x der Fensterbreite (0,5 + versatz); der Rotor reicht etwa
+   7,5 % der Fensterhöhe zu jeder Seite. Fließender Text endet davor —
+   sonst laufen Zeilen und Tür beim Scrollen quer durch Turm und Blätter,
+   vor allem auf flachen Laptops, wo 1040px fast bis zum Turm reichen.
+   Die Papierkarte oben auf /contact bleibt außen vor: Sie ist deckend
+   und darf vor der Anlage liegen. */
+@media (min-aspect-ratio: 1/1) {
+  .frei.frei {
+    --anlage-x: 82vw;
+    max-width: min(1040px, calc(var(--anlage-x) - 7.5vh - 24px - var(--rand)));
+  }
+  .frei.nah {
+    --anlage-x: 76.5vw;
+  }
+}
+/* Hochformat: Die Anlage steht oben im Bild (Partitur `hoch`), der
+   Titel beginnt erst darunter — nicht über Turm und Blättern. */
+@media (max-width: 767px) {
+  .kopfteil {
+    --frei-oben: max(300px, 40svh);
+  }
+}
+
+/* Hochformat: Die Anlage steht oben in der Bildmitte, der Text fließt
+   in ganzer Breite darüber hinweg. Damit Telefonnummer und Tür nicht auf
+   Turm und Nabe stehen, trägt der fließende Text einen eigenen Schleier
+   in Horizontfarbe — die Szene wird darunter blass („soluk", 4.14), bleibt
+   aber über dem Titel und am Seitenende frei. Nachts ohne Papieranteil,
+   sonst würde der Schleier grau. */
+@media (max-aspect-ratio: 1/1) {
+  .kopfteil,
+  .folgeteil,
+  .schluss {
+    --verdeckt: color-mix(
+      in srgb,
+      color-mix(in srgb, var(--horizont) 78%, var(--papier)) 88%,
+      transparent
+    );
+  }
+  :global(.erlebnis[data-nacht="1"]) :is(.kopfteil, .folgeteil, .schluss) {
+    --verdeckt: color-mix(in srgb, var(--horizont) 88%, transparent);
+  }
+  .kopfteil {
+    background: linear-gradient(
+      180deg,
+      transparent 0,
+      transparent calc(var(--frei-oben) - 72px),
+      var(--verdeckt) calc(var(--frei-oben) - 8px)
+    );
+  }
+  .folgeteil {
+    background: var(--verdeckt);
+  }
+}
+
+.zweispaltig {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: 48px clamp(40px, 6vw, 112px);
+  align-items: end;
+}
+.links {
+  min-width: 0;
+}
+.rechts {
+  min-width: 0;
+}
+@media (max-width: 1023px) {
+  .zweispaltig {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Direkt erreichbar: Telefon in der größten Schrift der Seite, die
+   übrigen Wege als ruhige Zeilen darunter. */
+.direktTitel {
+  margin: 44px 0 0;
+}
+.direkt {
+  margin: 14px 0 0;
+  border-top: 1px solid var(--linie);
+  max-width: 40rem;
+}
+.direkt > div {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 4px 20px;
+  align-items: baseline;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--linie);
+}
+.direkt dt {
+  font-stretch: 118%;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.direkt dd {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text);
+}
+.direkt a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--linie);
+  transition: border-color 200ms, color 200ms;
+}
+.direkt a:hover {
+  border-color: var(--signal);
+}
+.telefonZeile {
+  align-items: center !important;
+}
+.direkt .telefon {
+  display: inline-block;
+  border: 0;
+  font-stretch: 62%;
+  font-weight: 800;
+  font-size: clamp(2.6rem, min(5.4vw, 9vh), 5rem);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+}
+.direkt .telefon:hover {
+  color: var(--signal);
+}
+.adresse {
+  font-style: normal;
+  line-height: 1.5;
+}
+.direkt .karteLink {
+  display: inline-block;
+  margin-top: 8px;
+  font-stretch: 112%;
+  font-size: 13px;
+  font-weight: 600;
+  border-color: var(--signal);
+}
+@media (max-width: 639px) {
+  .direkt > div {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Papierkarte: immer hell, Tinte darauf — auch nachts                 */
+/* ------------------------------------------------------------------ */
+
+.karte {
+  --text: var(--tinte);
+  --text-2: rgb(18 20 23 / 0.72);
+  --text-3: rgb(18 20 23 / 0.5);
+  --linie: rgb(18 20 23 / 0.18);
+  position: relative;
+  color: var(--text);
+  background: #f6f5f0;
+  border: 1px solid rgb(18 20 23 / 0.12);
+  box-shadow: 0 30px 60px -40px rgb(18 20 23 / 0.45);
+  padding: clamp(22px, 3vw, 36px);
+}
+/* Nachts trägt die Karte Tinte, auch der Knopf bleibt dunkel. */
+:global(.erlebnis) .karte.karte :global(.e-knopf-voll) {
+  background: var(--tinte);
+  border-color: var(--tinte);
+  color: #fff;
+}
+:global(.erlebnis) .karte.karte :global(.e-knopf-voll):hover {
+  background: var(--signal);
+  border-color: var(--signal);
+}
+.karte :global(.e-etikett) {
+  color: var(--text-2);
+}
+.signal {
+  color: var(--signal) !important;
+}
+.kartenTitel {
+  margin-top: 12px;
+}
+.kartenText {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.verweis {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid var(--signal);
+}
+.verweis:hover {
+  color: var(--signal);
+}
+
+/* Zwei Richtungen auf /contact */
+.wege {
+  display: grid;
+}
+.weg {
+  display: block;
+  padding: 22px 0;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--linie);
+}
+.weg:first-of-type {
+  margin-top: 10px;
+  border-top: 1px solid var(--tinte);
+}
+.weg:last-child {
+  border-bottom: 0;
+  padding-bottom: 4px;
+}
+.wegTitel {
+  transition: color 200ms;
+}
+.weg:hover .wegTitel {
+  color: var(--signal);
+}
+.wegCta {
+  display: inline-flex;
+  gap: 10px;
+  margin-top: 16px;
+  font-stretch: 112%;
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 1px solid var(--linie);
+  padding-bottom: 3px;
+  transition: gap 200ms, border-color 200ms;
+}
+.wegCta span {
+  color: var(--signal);
+}
+.weg:hover .wegCta {
+  gap: 16px;
+  border-color: var(--signal);
+}
+
+/* ------------------------------------------------------------------ */
+/* Formular                                                            */
+/* ------------------------------------------------------------------ */
+
+.formular {
+  min-width: 0;
+}
+/* Browser-Validierung und Fokus scrollen das Feld ins Bild — ohne Rand
+   an die Oberkante, unter die Kopfleiste und in die Ausblend-Maske
+   (--kante-oben-voll, bis 140px), wo die Fehlerblase ins Leere zeigt.
+   Der Rand hält Feld und Beschriftung darüber sichtbar; unten bleibt das
+   HUD frei. */
+.formular :is(input, select, textarea) {
+  scroll-margin-top: 190px;
+  scroll-margin-bottom: 140px;
+}
+.felder {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 20px;
+}
+.breit {
+  grid-column: 1 / -1;
+}
+@media (max-width: 639px) {
+  .felder {
+    grid-template-columns: 1fr;
+  }
+}
+.gruppe {
+  margin-top: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--linie);
+}
+.hinweis {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+.label {
+  display: block;
+  font-stretch: 112%;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+}
+.feld {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 11px 0 10px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgb(18 20 23 / 0.35);
+  border-radius: 0;
+  outline: none;
+  transition: border-color 200ms;
+}
+.feld::placeholder {
+  color: var(--text-3);
+}
+.feld:hover {
+  border-bottom-color: var(--tinte);
+}
+.feld:focus,
+.feld:focus-visible {
+  outline: none;
+  border-bottom-color: var(--signal);
+  box-shadow: 0 1px 0 0 var(--signal);
+}
+select.feld {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--tinte) 50%),
+    linear-gradient(135deg, var(--tinte) 50%, transparent 50%);
+  background-position: calc(100% - 10px) 52%, calc(100% - 5px) 52%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 24px;
+  cursor: pointer;
+}
+.nachricht {
+  resize: vertical;
+  min-height: 7.5em;
+  border: 1px solid rgb(18 20 23 / 0.35);
+  padding: 10px 12px;
+}
+.nachricht:hover {
+  border-color: var(--tinte);
+}
+.nachricht:focus,
+.nachricht:focus-visible {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 1px var(--signal);
+}
+
+/* Honeypot: aus dem Bild, nicht aus dem DOM. */
+.honigtopf {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.einwilligung {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 26px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.einwilligung input {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  accent-color: var(--signal);
+}
+
+.fehler {
+  margin-top: 22px;
+  padding: 14px 16px;
+  border-left: 2px solid var(--signal);
+  background: rgb(224 71 42 / 0.08);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.fehler p {
+  margin: 0;
+}
+.fehlerTitel {
+  margin-bottom: 6px !important;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.absenden {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+  margin-top: 26px;
+}
+.absenden button {
+  cursor: pointer;
+  font-family: inherit;
+}
+.absenden button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.pflicht {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+@media (max-width: 639px) {
+  .absenden button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Formularseiten: Kopf, Raster, Begleitung                            */
+/* ------------------------------------------------------------------ */
+
+.formKopf {
+  max-width: 920px;
+}
+.warnung {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  margin: 26px 0 0;
+  padding: 12px 0 12px 16px;
+  border-left: 2px solid var(--signal);
+  font-size: 15px;
+  color: var(--text);
+}
+.warnung a {
+  font-stretch: 80%;
+  font-weight: 800;
+  font-size: 20px;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--signal);
+}
+.warnung a:hover {
+  color: var(--signal);
+}
+
+.anfrageRaster {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+  gap: 48px clamp(40px, 6vw, 96px);
+  align-items: start;
+  margin-top: clamp(40px, 6vh, 64px);
+}
+@media (max-width: 1023px) {
+  .anfrageRaster {
+    grid-template-columns: 1fr;
+  }
+}
+.anfrageLead {
+  margin: 0 0 28px;
+}
+
+.begleitung {
+  display: grid;
+  gap: 34px;
+  align-content: start;
+}
+.spaltenTitel {
+  margin: 0;
+  line-height: 1.35;
+  font-stretch: 118%;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.spaltenText {
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.eilig {
+  color: var(--text);
+}
+
+.ablauf {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--text);
+}
+.ablauf li {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 4px 10px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--linie);
+}
+.ablaufNr {
+  font-stretch: 118%;
+  font-size: 11px;
+  font-weight: 600;
+  padding-top: 4px;
+  color: var(--signal);
+}
+.ablaufTitel {
+  margin: 0;
+  font-stretch: 80%;
+  font-weight: 800;
+  font-size: 19px;
+  line-height: 1.1;
+  color: var(--text);
+}
+.ablaufText {
+  margin: 6px 0 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.hilfreich {
+  display: grid;
+}
+.punkte {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.punkte li {
+  display: flex;
+  gap: 12px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+  transition: color 200ms;
+}
+.strich {
+  flex-shrink: 0;
+  width: 14px;
+  height: 1px;
+  margin-top: 11px;
+  background: var(--text-3);
+  transform-origin: left;
+  transition: background 200ms, transform 200ms;
+}
+.leise {
+  margin: 14px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+/* Feld ↔ Angabe: Wer ein Feld ausfüllt, sieht daneben, welche Angabe
+   dort hineingehört. Nur Farbe und Transform, ohne Skript. */
+.wurzel:has([name="anlagentyp"]:focus) [data-feld~="anlagentyp"],
+.wurzel:has([name="leistung"]:focus) [data-feld~="leistung"],
+.wurzel:has([name="baujahr"]:focus) [data-feld~="baujahr"],
+.wurzel:has([name="standort"]:focus) [data-feld~="standort"],
+.wurzel:has([name="nachricht"]:focus) [data-feld~="nachricht"] {
+  color: var(--text);
+}
+.wurzel:has([name="anlagentyp"]:focus) [data-feld~="anlagentyp"] .strich,
+.wurzel:has([name="leistung"]:focus) [data-feld~="leistung"] .strich,
+.wurzel:has([name="baujahr"]:focus) [data-feld~="baujahr"] .strich,
+.wurzel:has([name="standort"]:focus) [data-feld~="standort"] .strich,
+.wurzel:has([name="nachricht"]:focus) [data-feld~="nachricht"] .strich {
+  background: var(--signal);
+  transform: scaleX(1.6);
+}
+
+/* Nach dem Absenden: Schritt 01 „Rückmeldung" ist erreicht — wie im HUD. */
+.wurzel:has([data-gesendet]) [data-schritt="1"] .ablaufTitel {
+  color: var(--signal);
+}
+.wurzel:has([data-gesendet]) [data-schritt="1"] {
+  border-bottom-color: var(--signal);
+}
+
+/* Telefon in der Begleitung von /contact */
+.direktKlein {
+  padding-top: 18px;
+  border-top: 1px solid var(--linie);
+}
+.telefonKlein {
+  font-stretch: 70%;
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--text);
+  text-decoration: none;
+}
+.telefonKlein:hover {
+  color: var(--signal);
+}
+.nebenwege {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin-top: 12px;
+  font-size: 14.5px;
+}
+.nebenwege a {
+  color: var(--text-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--linie);
+}
+.nebenwege a:hover {
+  color: var(--text);
+  border-color: var(--signal);
+}
+
+/* Schluss ohne Titel (/contact): nur Tür und Fuß, ohne Papier. Er
+   behält die volle Fensterhöhe wie jeder Abspann — sonst erreicht die
+   Seite ihr letztes Kapitel nie, und Schiene und HUD blieben auf 02. */
+.schluss.schlussKurz.schlussKurz {
+  background: none;
+}
+/* Der Abspann setzt fest Tinte auf Papier. Hier folgt die Schrift der
+   echten Uhrzeit: Nachts liegt kein Papier unter dem Titel, und Tinte
+   auf der Nachtszene wäre unlesbar. Tagsüber bleibt alles wie im
+   Abspann-Baustein. */
+.schluss.schluss {
+  --text: inherit;
+  --text-2: inherit;
+  --text-3: inherit;
+  --linie: inherit;
+}
+:global(.erlebnis[data-nacht="1"]) .schluss.schluss {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 40%,
+    rgb(10 12 16 / 0.5) 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strich,
+  .punkte li,
+  .wegCta,
+  .feld {
+    transition: none;
+  }
+}
+
+/* Hochformat, Schluss ohne Titel (/contact): Tür und Fuß stehen unten
+   und tragen den Schleier; darüber bleibt die Anlage im letzten Bild frei. Steht am
+   Dateiende, weil es die Hintergründe des Schlusses oben (Tag wie Nacht)
+   überschreiben muss. */
+@media (max-aspect-ratio: 1/1) {
+  .schluss.schluss.schluss.schluss,
+  :global(.erlebnis[data-nacht="1"]) .schluss.schluss.schluss {
+    background: linear-gradient(
+      180deg,
+      var(--verdeckt) 0,
+      transparent 16%,
+      transparent 46%,
+      var(--verdeckt) 58%
+    );
+  }
+  /* Mit Titel (Formulare) füllt der Schluss das letzte Bild bis über die
+     Anlage — die Tür stünde sonst auf dem Turm. Hier ganz verschleiert. */
+  .schluss.schluss.schluss.schluss:not(.schlussKurz),
+  :global(.erlebnis[data-nacht="1"]) .schluss.schluss.schluss:not(.schlussKurz) {
+    background: var(--verdeckt);
+  }
+}

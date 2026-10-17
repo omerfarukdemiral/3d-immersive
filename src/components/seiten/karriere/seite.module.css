@@ -1,0 +1,42 @@
+/*
+ * Eigene Stile der Karriere-Seite. Tokens (--linie, --text-3 …) kommen
+ * aus .erlebnis. Nur, was die Bausteine nicht haben: Abstand zwischen den
+ * beiden Anzeigen, Listen in der Spezifikationstabelle, die
+ * zwei ehrlichen Listen nebeneinander und das große Zitat im Gondeltakt.
+ */
+
+/* Jede Anzeige ist ein eigener Block: Titel, Einleitung, Spezifikation,
+   Bewerbungsweg. */
+.stelle {
+  display: grid;
+  gap: 18px;
+}
+
+/* In der Tabelle sitzt die Liste direkt am Schlüssel. */
+.punkte {
+  margin: 0;
+  gap: 6px;
+}
+
+.ehrlich {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 40px;
+}
+
+/* Der Satz der Seite: größer als ein normales Zitat, aber schmal genug,
+   dass er neben der Gondel steht. */
+.zitat {
+  max-width: 16ch;
+  font-size: clamp(2.2rem, min(4.2vw, 8vh), 4.4rem);
+}
+
+@media (max-width: 767px) {
+  .ehrlich {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .zitat {
+    font-size: clamp(1.8rem, 8vw, 2.4rem);
+  }
+}

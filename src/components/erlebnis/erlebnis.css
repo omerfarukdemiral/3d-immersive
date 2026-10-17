@@ -1,0 +1,1140 @@
+/* ------------------------------------------------------------------
+   Startseite — „Eine Anlage. Ein Tag."
+
+   Eine Familie (Archivo) über ihre Breitenachse:
+     schmal + schwer   → Schlagzeilen, große Zahlen
+     normal            → Fließtext
+     breit + Versalien → Beschriftungen
+   Farbe kommt vom Himmel (--oben, --horizont, gesetzt pro Bild);
+   fest sind nur Tinte, Papier und das Signalrot der Blattspitze.
+
+   Alles unter .erlebnis, damit die Unterseiten unberührt bleiben, wenn man
+   von hier aus weiter navigiert.
+------------------------------------------------------------------- */
+
+.erlebnis {
+  --tinte: #121417;
+  --papier: #ecebe4;
+  --signal: #e0472a;
+  --text: var(--tinte);
+  --text-2: rgb(18 20 23 / 0.72);
+  --text-3: rgb(18 20 23 / 0.5);
+  --linie: rgb(18 20 23 / 0.18);
+  /* Startwerte = himmelUm(06:25), der Himmel des Prologs. So sieht das
+     Server-Bild schon aus wie das erste Skriptbild, und der Himmel springt
+     beim Laden nicht von Dunkelblau auf Morgenblass. */
+  --oben: #5d7a9c;
+  --horizont: #e4cdba;
+  --rand: 22px;
+
+  position: relative;
+  color: var(--text);
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  font-stretch: 100%;
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  /* Kein transition: color hier. Am Wurzelelement erbt jedes Wort der
+     Seite die Farbe — beim Wechsel Tag/Nacht startete der Browser für
+     jedes einzelne einen eigenen Übergang: 200 ms Stillstand mitten im
+     Scroll. Der Umschlag fällt in die Kamerafahrt zwischen zwei
+     Kapiteln, wenn kein Text im Bild steht. */
+}
+.erlebnis[data-nacht="1"] {
+  --text: #eeede8;
+  --text-2: rgb(238 237 232 / 0.74);
+  --text-3: rgb(238 237 232 / 0.5);
+  --linie: rgb(238 237 232 / 0.2);
+}
+@media (min-width: 768px) {
+  .erlebnis { --rand: 44px; }
+}
+@media (min-width: 1280px) {
+  .erlebnis { --rand: 64px; }
+}
+
+.erlebnis ::selection { background: var(--signal); color: #fff; }
+.erlebnis :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+.erlebnis .tnum { font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ */
+/* Ebenen                                                              */
+/* ------------------------------------------------------------------ */
+
+.e-himmel,
+.e-szene,
+.e-schleier,
+.e-leitlinien {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100lvh;
+}
+.e-himmel {
+  z-index: 0;
+  background: linear-gradient(180deg, var(--oben) 0%, var(--horizont) 72%, var(--horizont) 100%);
+}
+.e-szene { z-index: 1; }
+
+/* Bewegungsstufen L1/L0 (Partitur.bewegung): Die Szene steht still und
+   tritt hinter den Text zurück — ein Schleier in Horizontfarbe, damit
+   sie zur Tageszeit passt statt grau zu wirken. */
+.e-blende {
+  position: fixed;
+  inset: 0;
+  height: 100lvh;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background: color-mix(in srgb, var(--horizont) 78%, var(--papier));
+  transition: opacity 900ms ease;
+}
+.erlebnis[data-bewegung="L1"] .e-blende { opacity: 0.62; }
+.erlebnis[data-bewegung="L0"] .e-blende { opacity: 0.5; }
+
+/* Schleier auf der Textseite: hält den Text lesbar, ohne die Szene
+   abzudunkeln. Folgt der Horizontfarbe, damit er nie als Fläche auffällt. */
+.e-schleier {
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  /* Kein zeitlicher Übergang: Die Deckkraft schreibt die Scrollschleife
+     (Erlebnis.tsx), damit der Schleier im Kapitelwechsel genau so weit
+     überblendet ist, wie gescrollt wurde. */
+  --s: color-mix(in srgb, var(--horizont) 62%, transparent);
+  --s2: color-mix(in srgb, var(--horizont) 28%, transparent);
+}
+.e-schleier-links { background: linear-gradient(90deg, var(--s) 0%, var(--s2) 34%, transparent 58%); }
+.e-schleier-rechts { background: linear-gradient(270deg, var(--s) 0%, var(--s2) 34%, transparent 58%); }
+.erlebnis[data-seite="links"] .e-schleier-links,
+.erlebnis[data-seite="rechts"] .e-schleier-rechts { opacity: 1; }
+.erlebnis[data-seite="unten"] .e-schleier-links {
+  opacity: 1;
+  background: linear-gradient(0deg, var(--s) 0%, var(--s2) 40%, transparent 70%);
+}
+@media (max-width: 767px) {
+  /* Hochformat: Der Textblock reicht bis knapp über die Bildmitte und
+     steht oft auf Turm und Blättern. Der Schleier trägt darum bis dorthin
+     voll und läuft erst darüber aus — die Anlage oben bleibt klar. */
+  .erlebnis .e-schleier-links {
+    opacity: 1;
+    --s3: color-mix(in srgb, var(--horizont) 74%, transparent);
+    background: linear-gradient(0deg, var(--s3) 0%, var(--s3) 40%, var(--s2) 62%, transparent 74%);
+  }
+  .erlebnis .e-schleier-rechts { opacity: 0; }
+}
+
+.e-leitlinien { z-index: 3; pointer-events: none; overflow: visible; }
+.e-leitlinien path {
+  fill: none;
+  stroke: var(--signal);
+  stroke-width: 1.25;
+  opacity: 0;
+}
+.e-leitlinien g { opacity: 0; }
+.e-punkt { fill: var(--signal); }
+.e-ring {
+  fill: none;
+  stroke: var(--signal);
+  stroke-width: 1;
+  /* Ohne fill-box skaliert der Kreis um den Ursprung der SVG-Fläche
+     und wandert vom Punkt weg. */
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: e-puls 1.8s ease-out infinite;
+}
+@keyframes e-puls {
+  from { transform: scale(0.4); opacity: 1; }
+  to { transform: scale(1.4); opacity: 0; }
+}
+
+.erlebnis main { position: relative; z-index: 4; }
+
+/* ------------------------------------------------------------------ */
+/* Kopf, Schiene, HUD                                                  */
+/* ------------------------------------------------------------------ */
+
+.e-sprungmarke {
+  position: fixed;
+  left: 16px;
+  top: -100px;
+  z-index: 50;
+  background: var(--tinte);
+  color: #fff;
+  padding: 10px 16px;
+}
+.e-sprungmarke:focus { top: 16px; }
+
+.e-kopf {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 18px var(--rand);
+}
+/* Logo: Textwortmarke in fester Box, Tag- und Nachtfassung deckungsgleich
+   darin (siehe Erlebnis.tsx). Tag: Tinte, Nacht: Papier. */
+.e-logo {
+  position: relative;
+  display: block;
+  flex: none;
+  height: 34px;
+  aspect-ratio: 3 / 1;
+  text-decoration: none;
+}
+.e-logo-tag,
+.e-logo-nacht {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  font-family: var(--font-archivo, sans-serif);
+  font-size: 13.5px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  transition: opacity 700ms ease;
+}
+.e-logo-tag b,
+.e-logo-nacht b { font-weight: 800; font-stretch: 112%; }
+.e-logo-tag span,
+.e-logo-nacht span { font-weight: 500; font-stretch: 112%; }
+.e-logo-tag { color: var(--tinte); }
+.e-logo-tag span { color: var(--signal); }
+.e-logo-nacht { color: var(--papier); opacity: 0; }
+.e-logo-nacht span { color: #F08A6E; }
+.erlebnis[data-nacht="1"] .e-logo-tag { opacity: 0; }
+.erlebnis[data-nacht="1"] .e-logo-nacht { opacity: 1; }
+
+/* Kompakte Uhr in der Kopfleiste — nur mobil, wo der HUD keine Uhr zeigt. */
+.e-kopf-uhr {
+  display: none;
+  align-items: baseline;
+  gap: 8px;
+  margin-left: -14px;
+  padding-left: 12px;
+  border-left: 1px solid var(--linie);
+  font-stretch: 70%;
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1;
+  color: var(--text);
+}
+.e-kopf-kap {
+  font-stretch: 118%;
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+}
+@media (max-width: 767px) {
+  .e-logo { height: 28px; }
+  .e-kopf-uhr { display: inline-flex; }
+}
+.e-nav {
+  display: none;
+  gap: 26px;
+  margin-left: auto;
+  font-stretch: 112%;
+  font-size: 13px;
+  font-weight: 500;
+}
+.e-nav a {
+  color: var(--text-2);
+  text-decoration: none;
+  transition: color 200ms;
+  /* Läuft im Kapitelwechsel die Gondel hinter der Navigation durch,
+     hält ein Hof in Horizontfarbe die Schrift lesbar. Vor freiem Himmel
+     fällt er nicht auf — er hat dessen Farbe. Bewusst nicht am Logo. */
+  text-shadow:
+    0 0 3px color-mix(in srgb, var(--horizont) 70%, transparent),
+    0 0 12px color-mix(in srgb, var(--horizont) 85%, transparent);
+}
+.e-nav a:hover { color: var(--text); }
+@media (min-width: 1024px) {
+  .e-nav { display: flex; }
+  /* Leichter Verlauf hinter der Kopfleiste, nur in der Anatomie: Dort
+     läuft die Kamera nah an Turm und Gondel, die dann hinter der
+     Navigation durchziehen. Der Blick geht waagrecht, oben steht also
+     Horizontfarbe — vor freiem Himmel fällt der Verlauf nicht auf. */
+  .e-kopf::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 -36px 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 600ms ease;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--horizont) 72%, transparent) 0%,
+      color-mix(in srgb, var(--horizont) 48%, transparent) 55%,
+      transparent 100%
+    );
+  }
+  .erlebnis[data-kap="anatomie"] .e-kopf::before { opacity: 1; }
+}
+.e-kopf .e-knopf { margin-left: auto; }
+@media (min-width: 1024px) {
+  .e-kopf .e-knopf { margin-left: 0; }
+}
+
+.e-schiene {
+  position: fixed;
+  right: calc(var(--rand) - 8px);
+  top: 50%;
+  z-index: 20;
+  transform: translateY(-50%);
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+}
+@media (min-width: 1024px) and (min-height: 640px) {
+  .e-schiene { display: flex; }
+}
+.e-schiene a {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-stretch: 118%;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  text-decoration: none;
+}
+.e-schiene a::before {
+  content: "";
+  width: 14px;
+  height: 1px;
+  background: currentColor;
+  transition: width 300ms;
+}
+.e-schiene-name {
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 250ms, transform 250ms;
+}
+.e-schiene a:hover .e-schiene-name,
+.e-schiene a[aria-current] .e-schiene-name { opacity: 1; transform: none; }
+.e-schiene a[aria-current] { color: var(--text); }
+.e-schiene a[aria-current]::before { width: 28px; background: var(--signal); }
+
+.e-hud {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 var(--rand) 18px;
+  pointer-events: none;
+}
+.e-hud-uhr { display: flex; align-items: baseline; gap: 14px; }
+/* Kleine graue HUD-Zeilen: gleicher Hof wie die Navigation, falls der
+   weiße Turm dahinter steht (Menschen, Untersicht). */
+.e-hud .e-etikett {
+  text-shadow:
+    0 0 3px color-mix(in srgb, var(--horizont) 70%, transparent),
+    0 0 12px color-mix(in srgb, var(--horizont) 85%, transparent);
+}
+/* Messgröße der Seite (Partitur.hud): [Etikett] Wert[Einheit] [Notiz].
+   Leere Teile fallen weg, damit die Startseite (nur Wert und Notiz)
+   genau so steht wie zuvor. */
+.e-hud-uhr > :empty { display: none; }
+.e-hud-wert {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-stretch: 70%;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.e-hud-einheit:empty { display: none; }
+.e-hud-einheit {
+  font-size: 0.62em;
+  font-stretch: 80%;
+  letter-spacing: 0;
+}
+.e-hud-etikett { color: var(--text); }
+.e-hud-rechts { display: none; flex-direction: column; align-items: flex-end; gap: 4px; }
+@media (min-width: 768px) {
+  .e-hud-rechts { display: flex; }
+}
+.e-hud-balken {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--linie);
+}
+.e-hud-balken > span {
+  display: block;
+  height: 100%;
+  background: var(--signal);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+@media (max-width: 767px) {
+  .e-hud-uhr .e-etikett { display: none; }
+  .e-hud-wert { font-size: 22px; }
+  .e-hud { padding-bottom: 12px; }
+  .e-hud-uhr { display: none; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Kapitel und Takte                                                   */
+/* ------------------------------------------------------------------ */
+
+.e-kapitel {
+  position: relative;
+  height: calc(var(--hoehe) * 100svh);
+  /* Luft für die Kamerafahrt zum nächsten Kapitel (partitur.ts, LUFT) */
+  margin-bottom: calc(var(--luft, 0) * 100svh);
+}
+.e-buehne {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: 96px var(--rand) 84px;
+  overflow: hidden;
+}
+.e-rechts { justify-content: flex-end; }
+@media (min-width: 1024px) {
+  .e-rechts { padding-right: calc(var(--rand) + 170px); }
+}
+.e-unten { align-items: flex-end; }
+
+.e-stapel { display: grid; width: 100%; max-width: 36rem; }
+.e-stapel > * { grid-area: 1 / 1; align-self: center; }
+.e-unten .e-stapel { max-width: none; }
+.e-unten .e-stapel > * { align-self: end; }
+.e-stapel .e-block-breit { max-width: 44rem; }
+.e-stapel:has(.e-block-breit) { max-width: 46rem; }
+
+/* Ohne Skript stünden alle Takte übereinander: Dann lieber untereinander. */
+@media (scripting: none) {
+  .e-kapitel { height: auto; margin-bottom: 0; }
+  .e-buehne { position: static; height: auto; display: block; }
+  .e-stapel { display: block; }
+  .e-stapel > * { margin-bottom: 64px; }
+}
+
+@media (max-width: 767px) {
+  .e-buehne { align-items: flex-end; padding-bottom: 40px; padding-top: 80px; }
+  .e-stapel > * { align-self: end; }
+  .e-rechts { justify-content: flex-start; }
+}
+
+[data-takt] { will-change: opacity, transform; }
+
+/* Kanten: Text, der beim Kapitelwechsel wandert, blendet unter der
+   Kopfleiste und über dem HUD weich aus, statt darunter durchzulaufen.
+   Die Maske ist eine Fensterhöhe groß; Erlebnis.tsx schiebt sie über
+   --kante-y gegen den Weg der Bühne, damit sie fest im Bild steht.
+   Nur der Text wird maskiert — die Szene liegt auf eigener Ebene. */
+.e-buehne,
+.e-fliesst {
+  /* Oben: ganz weg bis knapp unter Logo und Navigation, dann ein langer
+     weicher Auslauf. Die volle Deckung beginnt höhenabhängig — auf
+     flachen Fenstern (720 px) steht Wissen schon ab ~105 px im Bild. */
+  --kante-oben: 64px;
+  --kante-oben-voll: clamp(104px, 15vh, 140px);
+  /* Unten muss der Text vor der Uhrzeile ganz weg sein, nicht erst auf
+     ihrer Höhe — sonst scheint die nächste Zeile hinter der Uhr durch. */
+  --kante-unten: 60px;
+  --kante-unten-voll: 110px;
+  mask-image: linear-gradient(
+    180deg,
+    transparent var(--kante-oben),
+    #000 var(--kante-oben-voll),
+    #000 calc(100% - var(--kante-unten-voll)),
+    transparent calc(100% - var(--kante-unten))
+  );
+  mask-size: 100% var(--kante-h, 100lvh);
+  mask-position: 0 var(--kante-y, 0px);
+  mask-repeat: no-repeat;
+}
+@media (max-width: 767px) {
+  .e-buehne,
+  .e-fliesst {
+    /* Die Kopfleiste reicht bis ~52px: Text muss darunter schon ganz
+       verschwunden sein, bevor er Logo und Uhr erreicht. */
+    --kante-oben: 70px;
+    --kante-oben-voll: 140px;
+    --kante-unten: 4px;
+    --kante-unten-voll: 28px;
+  }
+}
+/* Der Abspann endet mit der Seite: Fußzeile und Kontakt stehen im
+   letzten Bild knapp über dem HUD. Unten blendet er darum erst auf
+   Höhe der Uhr aus, nicht schon eine Zeile darüber. */
+@media (min-width: 768px) {
+  .e-schluss-innen {
+    --kante-unten: 50px;
+    --kante-unten-voll: 74px;
+  }
+}
+@media (scripting: none) {
+  .e-buehne,
+  .e-fliesst { mask-image: none; }
+}
+
+/* Große Momente: Wörter treten gestaffelt auf (data-zeilen). --z kommt
+   aus der Scrollschleife: 0 → 1 Auftritt, 1 → 2 Abgang. Pro Wort wird
+   daraus ein eigener Anteil --e (auf) und --x (ab). Ohne Skript ist
+   --z = 1, alles steht. */
+@property --auftakt {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+.e-wort { display: inline-block; }
+.e-wort > span {
+  display: inline-block;
+  --staffel: 1.6;
+  --e: clamp(0, (min(var(--z, 1), var(--auftakt)) * (var(--n) + var(--staffel)) - var(--i)) / var(--staffel), 1);
+  --x: clamp(0, ((var(--z, 1) - 1) * (var(--n) + var(--staffel)) - var(--i)) / var(--staffel), 1);
+  opacity: calc(var(--e) - var(--x));
+  transform: translate3d(0, calc((1 - var(--e)) * 0.42em - var(--x) * 0.28em), 0);
+}
+/* Einzelnes Wort oder Zahl: steigt hinter einer Kante auf statt zu blenden. */
+[data-zeilen="kante"] .e-wort { clip-path: inset(-0.3em -0.2em 0 -0.2em); }
+[data-zeilen="kante"] .e-wort > span {
+  opacity: calc(1 - var(--x));
+  transform: translate3d(0, calc((1 - var(--e)) * 100% - var(--x) * 0.28em), 0);
+}
+/* Der Titel im Prolog steht ab dem ersten Bild — es gibt keinen Scroll,
+   an den er sich koppeln könnte. Er tritt einmal beim Laden auf; der
+   Abgang hängt wieder am Scroll. */
+.e-auftakt { animation: e-auftakt 1.5s cubic-bezier(0.22, 0.7, 0.2, 1) 0.25s both; }
+@keyframes e-auftakt {
+  from { --auftakt: 0; }
+  to { --auftakt: 1; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Typografie                                                          */
+/* ------------------------------------------------------------------ */
+
+.e-etikett {
+  font-stretch: 118%;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+.e-marke {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.e-strich { width: 18px; height: 1px; background: currentColor; opacity: 0.6; }
+/* Etikett mit zweiter Angabe (Leistungen: Bereich · Blickrichtung). */
+.e-etikett-zeile { display: flex; align-items: center; gap: 10px; }
+.e-marke span:first-child { color: var(--signal); font-weight: 700; }
+
+/* Die globalen Überschriftenregeln der Unterseiten (Schibsted) gelten
+   hier nicht: alles in derselben Familie. */
+.erlebnis h1, .erlebnis h2, .erlebnis h3, .erlebnis h4 { font-family: inherit; }
+
+.e-titel {
+  font-stretch: 68%;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 0.92;
+  text-wrap: balance;
+  color: var(--text);
+  margin: 0;
+}
+.e-titel-xl { font-size: clamp(3rem, min(7.4vw, 12.5vh), 8.4rem); }
+.e-block-breit .e-titel-xl { font-size: clamp(3rem, min(6.6vw, 12vh), 7.6rem); }
+.e-titel-l { font-size: clamp(2.1rem, min(4.4vw, 8vh), 4.6rem); }
+.e-titel-m { font-size: clamp(1.7rem, 2.6vw, 2.6rem); line-height: 0.98; }
+.e-titel-s { font-size: clamp(1.25rem, 1.6vw, 1.6rem); line-height: 1.02; }
+
+.e-text {
+  color: var(--text-2);
+  max-width: 54ch;
+  margin: 18px 0 0;
+  text-wrap: pretty;
+}
+.e-lead { font-size: clamp(17px, 1.3vw, 19.5px); color: var(--text); opacity: 0.86; }
+.e-klein { font-size: 15px; line-height: 1.5; margin-top: 10px; }
+
+.e-riesig {
+  font-stretch: 62%;
+  font-weight: 800;
+  font-size: clamp(8rem, min(26vw, 38vh), 24rem);
+  line-height: 0.8;
+  letter-spacing: -0.03em;
+  margin: 10px 0 14px -0.04em;
+  color: var(--text);
+}
+
+.e-signal { color: var(--signal) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Bausteine                                                           */
+/* ------------------------------------------------------------------ */
+
+.e-knoepfe { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+.e-knopf {
+  display: inline-flex;
+  align-items: center;
+  padding: 14px 22px;
+  border: 1px solid var(--linie);
+  border-radius: 999px;
+  font-stretch: 112%;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  text-decoration: none;
+  transition: background 200ms, border-color 200ms, color 200ms;
+  backdrop-filter: blur(6px);
+}
+.e-knopf:hover { border-color: var(--text); }
+.e-knopf-voll { background: var(--tinte); border-color: var(--tinte); color: #fff; }
+.e-knopf-voll:hover { background: var(--signal); border-color: var(--signal); }
+.erlebnis[data-nacht="1"] .e-knopf-voll { background: #eeede8; border-color: #eeede8; color: var(--tinte); }
+.erlebnis[data-nacht="1"] .e-knopf-voll:hover { background: var(--signal); border-color: var(--signal); color: #fff; }
+.e-knopf-klein { padding: 10px 16px; font-size: 13px; }
+
+.e-weiter {
+  display: inline-flex;
+  gap: 10px;
+  align-items: baseline;
+  margin-top: 24px;
+  font-stretch: 112%;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--linie);
+  padding-bottom: 4px;
+  transition: border-color 200ms, gap 200ms;
+}
+.e-weiter:hover { border-color: var(--signal); gap: 16px; }
+.e-weiter span:last-child { color: var(--signal); }
+
+.e-hinweis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+.e-hinweis-strich {
+  display: block;
+  width: 48px;
+  height: 1px;
+  background: currentColor;
+  transform-origin: left;
+  animation: e-zug 2.2s cubic-bezier(0.6, 0, 0.2, 1) infinite;
+}
+@keyframes e-zug {
+  0% { transform: scaleX(0); }
+  50% { transform: scaleX(1); transform-origin: left; }
+  51% { transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; }
+}
+@media (max-width: 767px) {
+  .e-hinweis { display: none !important; }
+}
+
+.e-fakten,
+.e-spez,
+.e-mass,
+.e-kontakt {
+  display: grid;
+  gap: 14px 32px;
+  margin: 28px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--linie);
+}
+.e-fakten { grid-template-columns: repeat(3, auto); justify-content: start; }
+.e-spez { grid-template-columns: 1fr 1fr; }
+.e-fakten dt,
+.e-spez dt,
+.e-mass dt,
+.e-kontakt dt {
+  font-stretch: 118%;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.e-fakten dd,
+.e-spez dd,
+.e-kontakt dd { margin: 6px 0 0; font-size: 15px; font-weight: 500; color: var(--text); }
+.e-kontakt a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--linie); }
+.e-kontakt a:hover { border-color: var(--signal); }
+
+.e-mass { grid-template-columns: auto auto; justify-content: start; gap: 8px 48px; }
+.e-mass dd {
+  margin: 4px 0 0;
+  font-stretch: 62%;
+  font-weight: 800;
+  font-size: clamp(3.4rem, 6vw, 6rem);
+  line-height: 0.9;
+}
+
+.e-liste { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 8px; }
+.e-liste li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 15.5px;
+  color: var(--text-2);
+}
+.e-liste li::before {
+  content: "";
+  flex: none;
+  width: 10px;
+  height: 1px;
+  background: var(--signal);
+  transform: translateY(-4px);
+}
+.e-liste-gross li {
+  font-stretch: 75%;
+  font-weight: 700;
+  font-size: clamp(1.4rem, 2.2vw, 2.1rem);
+  line-height: 1.05;
+  color: var(--text);
+}
+.e-liste-gross { margin-bottom: 34px; gap: 10px; }
+
+.e-jahre { margin: 24px 0 4px; }
+.e-jahre-spur { height: 6px; background: var(--linie); position: relative; overflow: hidden; }
+.e-fuellung {
+  position: absolute;
+  inset: 0;
+  background: var(--signal);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+.e-jahre-skala {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-stretch: 118%;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.e-ablesung {
+  margin: 22px 0 0;
+  font-stretch: 62%;
+  font-weight: 800;
+  font-size: clamp(3rem, 6vw, 5.6rem);
+  line-height: 0.9;
+}
+.e-ablesung span { color: var(--signal); }
+
+/* Zeitleiste des Ankaufs */
+.e-block-voll { width: 100%; max-width: min(1040px, 74vw); }
+.e-schmal { max-width: 22ch; }
+@media (min-width: 1024px) and (max-height: 820px) {
+  .e-zeitleiste .e-text { display: none; }
+  .e-zeitleiste { margin-top: 28px; }
+}
+.e-zeitleiste { position: relative; margin-top: 40px; }
+.e-zeitleiste-linie {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--linie);
+}
+.e-zeitleiste ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
+}
+.e-zeitleiste li { position: relative; padding-top: 24px; }
+.e-zeitleiste li::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--signal);
+}
+.e-zeitleiste .e-titel-s { margin-top: 8px; }
+.e-uebergabe {
+  margin: 14px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--linie);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.e-uebergabe .e-etikett { display: block; color: var(--signal); margin-bottom: 4px; }
+.e-fussnote { margin: 26px 0 0; font-size: 12.5px; color: var(--text-3); max-width: 70ch; }
+@media (max-width: 1023px) {
+  .e-block-voll { max-width: none; }
+  .e-zeitleiste ol { grid-template-columns: 1fr; gap: 10px; }
+  .e-zeitleiste-linie { display: none; }
+  .e-zeitleiste li { padding: 0 0 0 22px; }
+  .e-zeitleiste li::before { top: 4px; }
+  .e-zeitleiste .e-text { display: none; }
+  .e-zeitleiste .e-titel-s { margin-top: 2px; }
+  .e-uebergabe { margin-top: 6px; padding-top: 6px; font-size: 13px; }
+  .e-fussnote { display: none; }
+  .e-unten .e-titel-l { font-size: 2rem; }
+}
+
+.e-schritte {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+  border-top: 1px solid var(--linie);
+}
+.e-schritte li {
+  display: flex;
+  gap: 18px;
+  align-items: baseline;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--linie);
+  font-stretch: 80%;
+  font-weight: 700;
+  font-size: clamp(1.1rem, 1.5vw, 1.45rem);
+}
+.e-schritte li span { font-size: 11px; font-stretch: 118%; color: var(--signal); font-weight: 600; }
+
+.e-zitat {
+  margin: 0 0 18px;
+  font-stretch: 78%;
+  font-weight: 600;
+  font-size: clamp(1.7rem, 2.8vw, 2.8rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.e-zitat::before { content: "“"; color: var(--signal); }
+.e-zitat::after { content: "”"; color: var(--signal); }
+
+.e-artikel { list-style: none; padding: 0; margin: 30px 0 0; border-top: 1px solid var(--linie); }
+.e-artikel a {
+  display: grid;
+  gap: 6px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--linie);
+  color: inherit;
+  text-decoration: none;
+}
+.e-artikel a:hover .e-titel { color: var(--signal); }
+.e-artikel .e-text { margin-top: 2px; }
+@media (max-width: 767px) {
+  .e-artikel .e-text { display: none; }
+}
+
+/* Schluss: kein Takt mehr, der Abspann liegt auf Papier */
+.e-schluss {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  padding: 140px var(--rand) 96px;
+  /* Das Papier setzt erst unter dem Titel ein: Darüber steht der Abspann
+     (Flotte im Morgenlicht, zeitachse.ts) frei im Bild. */
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 46%,
+    color-mix(in srgb, var(--papier) 62%, transparent) 72%,
+    color-mix(in srgb, var(--papier) 90%, transparent) 100%
+  );
+  --text: var(--tinte);
+  --text-2: rgb(18 20 23 / 0.72);
+  --text-3: rgb(18 20 23 / 0.5);
+  --linie: rgb(18 20 23 / 0.18);
+  color: var(--text);
+}
+.e-schluss-innen { width: 100%; max-width: 1180px; }
+.e-schluss .e-titel-xl { max-width: 14ch; font-size: clamp(2.6rem, min(6.4vw, 10vh), 7.4rem); }
+.e-schluss .e-knopf-voll { background: var(--tinte); border-color: var(--tinte); color: #fff; }
+.e-kontakt { grid-template-columns: repeat(4, auto); justify-content: start; margin-top: 56px; }
+@media (max-width: 767px) {
+  .e-kontakt { grid-template-columns: 1fr 1fr; margin-top: 32px; }
+  /* Mobil gibt es unten keine Uhrzeile: Der Abspann darf tiefer enden,
+     damit seine Marke im letzten Bild unter der Blendzone der Kopfleiste
+     steht. */
+  .e-schluss { padding-bottom: 36px; }
+  .e-fuss { margin-top: 32px; }
+}
+/* Flache Fenster (Laptop, 720–820 px hoch): Am Seitenende lässt sich
+   nicht weiter scrollen. Der Block muss dort ganz unter der Kopfleiste
+   und ihrer Blendzone beginnen — Titel auf zwei Zeilen, engere Abstände. */
+@media (min-width: 768px) and (max-height: 820px) {
+  .e-schluss .e-titel-xl { max-width: 22ch; font-size: clamp(2.6rem, min(6.4vw, 9vh), 7.4rem); }
+  .e-schluss .e-marke { margin-bottom: 16px; }
+  .e-schluss .e-knoepfe { margin-top: 22px; }
+  .e-schluss .e-kontakt { margin-top: 30px; }
+  .e-schluss .e-fuss { margin-top: 26px; }
+}
+.e-fuss {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 48px;
+  padding-top: 18px;
+  border-top: 1px solid var(--linie);
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.e-fuss nav { display: flex; gap: 20px; }
+.e-fuss a { color: inherit; text-decoration: none; }
+.e-fuss a:hover { color: var(--text); }
+
+@media (max-width: 767px) {
+  .erlebnis { font-size: 16px; }
+  .e-titel-xl { font-size: clamp(2.6rem, 12vw, 4rem); }
+  .e-block-breit .e-titel-xl { font-size: clamp(2.6rem, 12vw, 4rem); }
+  .e-titel-l { font-size: clamp(2rem, 9vw, 2.8rem); }
+  .e-riesig { font-size: 38vw; }
+  .e-text { font-size: 15.5px; }
+  .e-fakten { grid-template-columns: 1fr 1fr; }
+  .e-knopf { padding: 12px 18px; }
+  .e-kopf { padding: 14px var(--rand); }
+  /* Logo, Uhr und Knopf in einer Zeile; ab 390 px mit Kapitelzahl. */
+  .e-kopf { gap: 12px; }
+  .e-kopf .e-knopf { white-space: nowrap; padding: 9px 14px; font-size: 12.5px; }
+  .e-kopf-uhr { margin-left: 0; padding-left: 10px; font-size: 17px; gap: 6px; }
+  /* Manche Seiten zeigen statt der Uhrzeit ein Wort (Referenzen:
+     „Deutschland“). Dann weicht die Kapitelzahl (data-lang, Erlebnis.tsx);
+     reicht es dann noch nicht, kürzt die Uhr ab. Logo und Knopf behalten
+     ihre Breite, der Knopf bleibt ganz im Bild. */
+  .e-kopf .e-knopf { flex: none; }
+  .e-kopf-uhr { min-width: 0; white-space: nowrap; }
+  .e-kopf-uhr > :first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .e-kopf-kap { flex: none; }
+  .e-kopf-uhr[data-lang="1"] .e-kopf-kap { display: none; }
+}
+/* Schmale Telefone (360 px und weniger): Die Kapitelzahl weicht, Uhrzeit
+   und Knopf bleiben ganz sichtbar und halten rechts den Rand. */
+@media (max-width: 379px) {
+  .e-kopf-kap { display: none; }
+  .e-kopf { gap: 10px; }
+  .e-kopf .e-knopf { padding: 9px 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .e-ring, .e-hinweis-strich, .e-auftakt { animation: none; }
+  .e-wort > span,
+  [data-zeilen="kante"] .e-wort > span { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Datenblatt: fließender Abschnitt auf Papier (bausteine/index.tsx)   */
+/* ------------------------------------------------------------------ */
+
+.e-datenblatt {
+  position: relative;
+  padding: clamp(120px, 18vh, 180px) var(--rand) clamp(96px, 14vh, 140px);
+  /* Weicher Einstieg: Das Papier wächst aus der Szene, statt als Kante
+     über sie zu fahren. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--papier) 0%, transparent) 0,
+    color-mix(in srgb, var(--papier) 94%, transparent) 220px,
+    color-mix(in srgb, var(--papier) 94%, transparent) 100%
+  );
+  /* Papier ist immer hell: Tinte darauf, auch nachts. */
+  --text: var(--tinte);
+  --text-2: rgb(18 20 23 / 0.72);
+  --text-3: rgb(18 20 23 / 0.5);
+  --linie: rgb(18 20 23 / 0.18);
+  color: var(--text);
+}
+/* Nachts über Papier: Kopfleiste, Schiene und HUD wechseln dort, wo das
+   Blatt unter ihnen liegt, auf Tinte (Erlebnis.tsx meldet die Lage).
+   Der Hof der kleinen Zeilen nimmt Papierfarbe statt Horizont. */
+.erlebnis[data-nacht="1"][data-papier-oben] .e-kopf,
+.erlebnis[data-nacht="1"][data-papier-mitte] .e-schiene,
+.erlebnis[data-nacht="1"][data-papier-unten] .e-hud {
+  --text: var(--tinte);
+  --text-2: rgb(18 20 23 / 0.72);
+  --text-3: rgb(18 20 23 / 0.5);
+  --linie: rgb(18 20 23 / 0.18);
+  --horizont: var(--papier);
+  color: var(--text);
+}
+.erlebnis[data-nacht="1"][data-papier-oben] .e-logo-tag { opacity: 1; }
+.erlebnis[data-nacht="1"][data-papier-oben] .e-logo-nacht { opacity: 0; }
+.erlebnis[data-nacht="1"][data-papier-oben] .e-kopf .e-knopf-voll,
+.erlebnis[data-nacht="1"] .e-datenblatt .e-knopf-voll {
+  background: var(--tinte);
+  border-color: var(--tinte);
+  color: #fff;
+}
+.erlebnis[data-nacht="1"][data-papier-oben] .e-kopf .e-knopf-voll:hover,
+.erlebnis[data-nacht="1"] .e-datenblatt .e-knopf-voll:hover {
+  background: var(--signal);
+  border-color: var(--signal);
+}
+.e-datenblatt-innen {
+  max-width: 1040px;
+  display: grid;
+  gap: 56px;
+}
+.e-datenblatt-kopf .e-titel { max-width: 22ch; }
+.e-datenblatt .e-text { max-width: 68ch; }
+.e-abschnitt { display: grid; gap: 6px; }
+.e-abschnitt > .e-titel { margin-bottom: 10px; }
+
+.e-tabelle { border-top: 1px solid var(--tinte); }
+.e-tabelle-titel {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  margin: 0;
+  padding: 14px 0 12px;
+  font-stretch: 118%;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.e-tabelle-titel .tnum { color: var(--signal); }
+.e-tabelle dl { margin: 0; }
+.e-tabelle dl > div {
+  display: grid;
+  grid-template-columns: minmax(140px, 15rem) 1fr;
+  gap: 8px 32px;
+  padding: 12px 0;
+  border-top: 1px solid var(--linie);
+}
+.e-tabelle dt {
+  font-stretch: 118%;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding-top: 3px;
+}
+.e-tabelle dd { margin: 0; font-size: 15.5px; color: var(--text); max-width: 68ch; }
+@media (max-width: 639px) {
+  .e-tabelle dl > div { grid-template-columns: 1fr; gap: 4px; }
+}
+
+.e-nliste { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--linie); }
+.e-nliste li {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--linie);
+}
+.e-nliste-nr {
+  font-stretch: 118%;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--signal);
+  padding-top: 5px;
+}
+.e-nliste .e-text { margin-top: 6px; }
+
+.e-fragen { border-top: 1px solid var(--linie); }
+.e-fragen details { border-bottom: 1px solid var(--linie); }
+.e-fragen summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding: 18px 0;
+  cursor: pointer;
+  list-style: none;
+  font-stretch: 80%;
+  font-weight: 700;
+  font-size: clamp(1.1rem, 1.5vw, 1.4rem);
+  line-height: 1.15;
+}
+.e-fragen summary::-webkit-details-marker { display: none; }
+.e-fragen-zeichen {
+  position: relative;
+  flex: none;
+  width: 12px;
+  height: 12px;
+}
+.e-fragen-zeichen::before,
+.e-fragen-zeichen::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1.5px;
+  background: var(--signal);
+  transition: transform 250ms ease;
+}
+.e-fragen-zeichen::after { transform: rotate(90deg); }
+.e-fragen details[open] .e-fragen-zeichen::after { transform: rotate(0deg); }
+.e-fragen details > .e-text { margin: 0 0 22px; }
+.e-fragen summary:hover { color: var(--signal); }
+
+/* Tür zur nächsten Seite: „WEITER — SERVICE · HÖHE 0 → 60 M" */
+.e-tuer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 14px;
+  margin: 0 0 clamp(48px, 9vh, 96px);
+  padding: 18px 0;
+  border-top: 1px solid var(--linie);
+  border-bottom: 1px solid var(--linie);
+  color: var(--text);
+  text-decoration: none;
+}
+.e-tuer-strich { width: 28px; height: 1px; background: var(--signal); align-self: center; }
+.e-tuer-name {
+  font-stretch: 68%;
+  font-weight: 800;
+  font-size: clamp(1.8rem, 3.4vw, 3.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+}
+.e-tuer-pfeil {
+  margin-left: auto;
+  color: var(--signal);
+  font-size: 1.6rem;
+  transition: transform 250ms ease;
+}
+.e-tuer:hover .e-tuer-name { color: var(--signal); }
+.e-tuer:hover .e-tuer-pfeil { transform: translateX(6px); }
+
+/* Flache Fenster (Laptop): Teaser weg, die Titel tragen die Liste allein. */
+@media (max-height: 900px) {
+  .e-artikel .e-text { display: none; }
+  .e-artikel a { padding: 12px 0; }
+}

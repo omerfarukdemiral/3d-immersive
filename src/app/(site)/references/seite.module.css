@@ -1,0 +1,11 @@
+/* /references — eigene Stile. Tokens kommen von .erlebnis. */
+
+/* Ausgangslagen stehen rechts. Die Bühne hält dort Platz für die
+   Kapitelschiene frei, aber nur für ihre Striche: Der Name des aktiven
+   Kapitels („Ausgangslagen 03") ist das längste Wort der Seite und
+   reichte sonst bis in Überschrift und Liste. */
+@media (min-width: 1024px) {
+  .lagen {
+    margin-right: 72px;
+  }
+}

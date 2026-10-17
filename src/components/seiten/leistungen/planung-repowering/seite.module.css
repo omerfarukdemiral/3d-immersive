@@ -1,0 +1,50 @@
+/* Eigene Stile von „Der Standort" (/services/planning-repowering).
+   Tokens (--signal, --text, --linie …) kommen aus erlebnis.css (.erlebnis). */
+
+/* § 16b-Satz im vierten Schritt: derselbe Text, nur hervorgehoben — er
+   ist die Aussage, die das Bild (rote Veränderung) zeigt. */
+.paragraph {
+  margin-top: 14px;
+  padding-left: 14px;
+  border-left: 2px solid var(--signal);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Legende zum Bild: welche Farbe was ist. */
+.legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  font-stretch: 118%;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.legende li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.bestand,
+.veraenderung {
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+}
+.bestand { background: var(--text); }
+.veraenderung { background: var(--signal); height: 3px; }
+
+/* Hintergrund-Beitrag im Datenblatt */
+.beitrag {
+  display: grid;
+  gap: 8px;
+  padding: 18px 0 4px;
+  border-top: 1px solid var(--linie);
+}
+.beitrag :global(.e-weiter) { margin-top: 6px; justify-self: start; }

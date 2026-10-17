@@ -1,0 +1,177 @@
+/* ------------------------------------------------------------------
+   /insights und Beiträge — „Lesemodus".
+   Tokens (--text, --linie, --signal, --rand …) kommen aus .erlebnis.
+------------------------------------------------------------------- */
+
+/* Index: Titel eines Beitrags ist der Link — ohne Unterstreichung, die
+   Signalfarbe zeigt, dass er einer ist. */
+.beitragLink {
+  color: inherit;
+  text-decoration: none;
+  transition: color 200ms;
+}
+.beitragLink:hover { color: var(--signal); }
+.beitragTitel { max-width: 18ch; }
+
+/* Beschriftung der vier Wege im Bild (Wegegabel.tsx, drei-Html): steht
+   mittig über dem Ring am Ende des Wegs. Im Hochformat liegen die Ringe
+   enger beisammen — die Schrift wird dort kleiner und rückt zusammen. */
+.wegEtikett {
+  display: block;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+  color: var(--text);
+}
+.wegLinks { transform: translate(-85%, -100%); }
+.wegRechts { transform: translate(-15%, -100%); }
+@media (max-width: 767px) {
+  :global(.erlebnis) .wegEtikett { font-size: 8.5px; letter-spacing: 0.06em; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Beitrag: Auftakt                                                    */
+/* ------------------------------------------------------------------ */
+
+/* Beitragstitel sind Sätze (bis neun Wörter): eine Stufe kleiner als die
+   Schlagzeilen der Bühnen, aber breiter gesetzt. */
+.titel { max-width: 20ch; }
+.lesezeit { margin-top: 22px; color: var(--text-3); }
+.zurueck {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--linie);
+  transition: border-color 200ms;
+}
+.zurueck:hover { border-color: var(--signal); }
+
+/* ------------------------------------------------------------------ */
+/* Beitrag: Abschnitte                                                 */
+/* ------------------------------------------------------------------ */
+
+/* Fließender Text, eine Spalte von 68 Zeichen in normaler Breite. Die
+   Szene steht dahinter blass (L1-Blende der Bühne); ein weicher
+   Papierschleier links hält die Spalte ruhig, ohne als Kasten
+   aufzufallen.
+
+   Der Schleier liegt auf einem eigenen Hintergrund-Element (::before),
+   nicht auf dem Abschnitt selbst: Nur so lässt er sich oben und unten
+   per Maske auslaufen, ohne den Text mitzumaskieren. Zwischen zwei
+   Abschnitten stößt er bündig an (keine Doppelung); vor dem ersten
+   Abschnitt wächst er über 120px aus der Szene, nach dem letzten läuft
+   er über 120px aus — keine waagrechte Naht quer durchs Bild. */
+.abschnitt {
+  position: relative;
+  isolation: isolate;
+  padding: clamp(64px, 11vh, 120px) var(--rand) 0;
+}
+.abschnitt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--papier) 46%, transparent) 0,
+    color-mix(in srgb, var(--papier) 30%, transparent) min(760px, 56vw),
+    transparent min(1100px, 80vw)
+  );
+}
+.erster::before {
+  top: -120px;
+  mask-image: linear-gradient(180deg, transparent 0, #000 120px);
+}
+.letzter::before {
+  mask-image: linear-gradient(0deg, transparent 0, #000 120px);
+}
+/* Kurzer Beitrag mit nur einem Abschnitt: beide Ränder laufen aus. */
+.erster.letzter::before {
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 120px,
+    #000 calc(100% - 120px),
+    transparent 100%
+  );
+}
+@media (max-width: 767px) {
+  /* Hochformat: Die Spalte füllt die Breite und liegt auf Turm und
+     Blättern — der Papierschleier trägt darum gleichmäßig. */
+  .abschnitt::before { background: color-mix(in srgb, var(--papier) 42%, transparent); }
+}
+/* Der letzte Abschnitt läuft ins Datenblatt aus. */
+.letzter { padding-bottom: clamp(48px, 8vh, 96px); }
+
+/* Das Datenblatt (Baustein) setzt sein Papier als Block bis zur
+   Unterkante; vor dem Abspann soll es ebenso weich in die Szene
+   zurückgehen. Die Maske greift nur im unteren Innenabstand (mindestens
+   96px), der Text bleibt unberührt. */
+.datenblattRahmen > :global(.e-datenblatt) {
+  mask-image: linear-gradient(180deg, #000 calc(100% - 90px), transparent);
+}
+
+.spalte { max-width: 68ch; }
+.h2 {
+  margin-top: 4px;
+  max-width: 24ch;
+}
+.absatz {
+  margin: 20px 0 0;
+  font-size: clamp(16.5px, 1.15vw, 18px);
+  line-height: 1.72;
+  color: var(--text);
+  text-wrap: pretty;
+}
+.liste {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--linie);
+  gap: 14px;
+}
+.liste li { font-size: 16px; line-height: 1.6; color: var(--text); }
+
+/* ------------------------------------------------------------------ */
+/* Datenblatt: weitere Beiträge                                        */
+/* ------------------------------------------------------------------ */
+
+.weitere {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0 32px;
+  grid-template-columns: 1fr;
+  border-top: 1px solid var(--linie);
+}
+@media (min-width: 768px) {
+  .weitere { grid-template-columns: 1fr 1fr; }
+}
+.weiterKarte {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 22px 40px 22px 0;
+  border-bottom: 1px solid var(--linie);
+  color: inherit;
+  text-decoration: none;
+}
+.weiterKarte :global(.e-titel) { max-width: 30ch; }
+.pfeil {
+  position: absolute;
+  right: 4px;
+  top: 22px;
+  color: var(--signal);
+  transition: transform 200ms;
+}
+.weiterKarte:hover .pfeil { transform: translateX(6px); }
+.weiterKarte:hover h3 { color: var(--signal); }
+
+/* Abspann: Link zur passenden Leistung unter dem Satz. */
+.leistung { display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pfeil,
+  .beitragLink,
+  .zurueck { transition: none; }
+  .weiterKarte:hover .pfeil { transform: none; }
+}

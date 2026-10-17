@@ -1,0 +1,126 @@
+/*
+ * Eigene Stile der Monitoring-Seite. CSS-Modul: Die Klassen gelten nur
+ * hier. Farben aus den Tokens der Bühne (--text, --signal …), damit
+ * Nacht- und Tagschrift von selbst wechseln.
+ */
+
+/* Etikett „Leitstand Musterstadt" unter der Meldung: roter Punkt wie der
+   Leitstand am Horizont, auf den die Leitlinie zeigt. */
+.ziel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+.zielpunkt {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--signal);
+}
+
+/* Etikett am Leitstand in der Szene (drei-Html, nur Bild) */
+.leitstand {
+  transform: translate(12px, -50%);
+  white-space: nowrap;
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  font-stretch: 118%;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #eeede8;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Frühindikatoren: drei laufende Spuren, Etikett links, Kurve rechts */
+.kurven {
+  list-style: none;
+  margin: 26px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  border-top: 1px solid var(--linie);
+}
+.kurve {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--linie);
+}
+.spur {
+  position: relative;
+  display: block;
+  height: 36px;
+  overflow: hidden;
+  /* Kurve läuft rechts herein und links hinaus: weiche Ränder */
+  mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
+}
+.welle {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 200%;
+  height: 100%;
+  overflow: visible;
+  animation: welle linear infinite;
+  will-change: transform;
+}
+.welle path {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.4px;
+  stroke-linejoin: round;
+}
+.kurve:last-child .welle path { stroke: var(--signal); }
+
+@keyframes welle {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@media (max-width: 767px) {
+  /* Schmal: Etikett über der Kurve statt daneben — „Schwingungsmuster"
+     ist mit Sperrung breiter als jede Spalte, die noch Kurve übrig lässt. */
+  .kurve { grid-template-columns: 1fr; gap: 2px; padding: 6px 0 4px; }
+  .spur { height: 24px; }
+  .kurven { margin-top: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welle { animation: none; }
+}
+
+/* Drehzahl unter „… läuft wieder an": zählt mit dem Rotor hoch */
+.drehzahl { margin-top: 20px; }
+
+/* „In den meisten Fällen nicht." — Antwort mit Abstand unter der Frage.
+   Um 05:00 steht sie auf dem Dämmerungshimmel (graues Mauve): Signalrot
+   hätte dort kaum 1,5:1 Kontrast. Die Schrift folgt deshalb --text (hell
+   bis 05:30, danach Tinte), das Rot bleibt als Strich davor. */
+.antwort {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 0.32em;
+}
+.antwort::before {
+  content: "";
+  flex: none;
+  width: 0.7em;
+  height: 0.12em;
+  background: var(--signal);
+}
+
+/* Dieselbe Dämmerung: Die Kapitelnummer der Marke ebenfalls in Schrift-
+   farbe statt Rot — der Strich daneben trägt die Markierung. */
+.daemmerung :global(.e-marke span:first-child) { color: var(--text); }
+
+/* „Was wir sonst noch übernehmen": Die gemeinsame Regel blendet die
+   Teaser in flachen Fenstern und mobil aus (display:none — auch für
+   Screenreader). Im Datenblatt scrollt die Seite normal, Platz ist da;
+   die Leads der anderen Leistungen bleiben sichtbar. */
+.andere li :global(.e-text) { display: block; }
