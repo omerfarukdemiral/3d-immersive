@@ -7,7 +7,7 @@
 <meta name="description" content="Scroll ile akan, tek sahneli bir 3D web sitesini kendi ürünün için kurmak: strateji, promptlar, Three.js trick'leri.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="3D Immersive Rehberi">
-<meta property="og:description" content="Tek sahne, tek nesne, scroll ile akan bir gün. Açık kaynak; strateji, promptlar ve trick'ler.">
+<meta property="og:description" content="Scroll ettikçe ilerleyen bir 3D siteyi nasıl yaptığımı anlattım. Kod açık kaynak; strateji, promptlar ve trick'ler içinde.">
 <meta property="og:image" content="https://omerfarukdemiral.github.io/3d-immersive/guide/img/prolog.jpg">
 <meta property="og:url" content="https://omerfarukdemiral.github.io/3d-immersive/guide/">
 <meta name="twitter:card" content="summary_large_image">
@@ -131,8 +131,8 @@ td:first-child { font-variant-numeric: tabular-nums; }
 .dosya-bas a { font: 500 13px/1 var(--baslik); color: var(--soluk); }
 
 /* Özet */
-.giris { max-width: 68ch; }
-.giris .alt { font-size: 21px; line-height: 1.5; color: #e6e6e6; margin-bottom: 24px; }
+.giris h1 { max-width: 980px; font-size: clamp(36px, 5.6vw, 64px); }
+.giris .alt { max-width: 60ch; font-size: 21px; line-height: 1.5; color: #e6e6e6; margin-bottom: 24px; }
 .baglar { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 8px; }
 .baglar a {
   font: 600 13px/1 var(--baslik); letter-spacing: 0.04em; text-transform: uppercase;
@@ -224,8 +224,8 @@ img { max-width: 100%; }
   <section id="ozet" class="sayfa genis" data-bolum>
     <div class="giris">
       <p class="etiket"><span lang="en">3d-immersive</span> · açık kaynak · MIT</p>
-      <h1>Tek sahne. Tek nesne. Scroll ile akan bir gün.</h1>
-      <p class="alt">Bu rehber, repodaki dört dokümanın okunabilir hâli. Amacı şu: aynı yapıyla, kendi ürününle, kendi 3D immersive siteni kurabilmen.</p>
+      <h1>Scroll ettikçe ilerleyen bir 3D site yaptım, nasıl yaptığımı burada anlatıyorum.</h1>
+      <p class="alt">Repodaki dört dokümanı tek sayfada okunacak hâle getirdim. Kodu indirip kendi ürününle bu tarz bir site kurmak istersen buradan başlayabilirsin.</p>
       <div class="baglar">
         <a class="dolu" href="../">Canlı demo</a>
         <a href="https://github.com/omerfarukdemiral/3d-immersive">GitHub reposu</a>
@@ -242,73 +242,73 @@ img { max-width: 100%; }
 
     <div class="okuma" style="margin-left:0">
       <h2>Fikir</h2>
-      <p>Sahnede tek bir nesne durur, kamera onun etrafında dolaşır, metin bölüm bölüm akar. Bu demoda nesne bir rüzgâr türbini, scroll ise türbinin bir günü. Her bölüm günün bir saatine denk geliyor; gökyüzü, ışık ve sis o saatten hesaplanıyor.</p>
-      <p>Gün fikri süs değil. Her bölüm sahnede bir şeyi değiştiriyor: ya ışığı, ya kamera açısını, ya da ölçeği. Sahnede hiçbir şey değiştirmeyen bölüm alt sayfaya taşınıyor.</p>
+      <p>Sahnede bir rüzgâr türbini var. Kamera etrafında geziyor, sen aşağı kaydırdıkça metin değişiyor. Scroll'u türbinin bir günü gibi düşündüm: sabah 06:25'te başlıyor, ertesi sabah bitiyor. Her bölüm günün bir saatine denk geliyor; gökyüzünün rengi, ışık ve sis de o saate göre hesaplanıyor.</p>
+      <p>Kendime bir kural koydum: her bölüm sahnede bir şeyi değiştirmeli. Ya ışık değişiyor, ya kamera başka bir açıya geçiyor, ya da ölçek büyüyor. Sahnede hiçbir şeyi değiştirmeyen bir bölüm çıktıysa onu ana sayfadan alıp alt sayfaya taşıdım.</p>
 
-      <h2>Scroll-driven nasıl çalışıyor</h2>
-      <p>Bütün site tek bir sayıya bağlı: anlatı zamanı <code>T</code>. Tam kısmı bölümün sırası, kesirli kısmı bölüm içinde ne kadar ilerlendiği.</p>
+      <h2>Scroll nasıl çalışıyor</h2>
+      <p>Her şey tek bir sayıya bağlı, kodda adı <code>T</code>. Tam kısmı hangi bölümde olduğunu, virgülden sonrası o bölümün ne kadarını geçtiğini söylüyor. Mesela 2,5 üçüncü bölümün ortası demek.</p>
 <div class="akis">scrollY ─(Lenis)─▶ <i>T</i> ─▶ saat → gökyüzü, ışık, sis
                      ├─▶ kamera konumu
                      ├─▶ sahne durumu (rotor, santraller, filo)
                      └─▶ metin blokları (opacity, translate)</div>
       <ul>
-        <li>Her bölüm ekranın birkaç katı yüksekliğinde bir kutu, içinde <code>position: sticky</code> bir sahne. Okurken sahne sabit kalıyor, son ekran yüksekliğinde sıradaki bölüm içeri kayıyor.</li>
-        <li>Metin blokları <code>data-takt="0.22 0.44"</code> ile işaretli: bölümün %22'sinde girer, %44'ünde çıkar. Kamera keyframe'leri de aynı birimle yazılıyor, metin ve kamera bu yüzden kendiliğinden senkron.</li>
-        <li>Keyframe'ler <code>[T, değer]</code> çiftleri; aralarında monoton kübik interpolasyon var. Kamera hedefi aşıp geri dönmüyor, keyframe'lerde durup kalkmıyor.</li>
-        <li>Kamera okurken duruyor, bölümler arasında uçuyor.</li>
-        <li>Scroll, Lenis ve metin tek bir <code>requestAnimationFrame</code> döngüsünde. 3D sahne aynı ortak durumu okuyor. React bu döngüde render etmiyor.</li>
+        <li>Her bölüm ekrandan birkaç kat uzun bir kutu, içinde <code>position: sticky</code> bir sahne var. Sen okurken sahne yerinde duruyor, kutunun sonuna gelince sıradaki bölüm içeri kayıyor.</li>
+        <li>Metin bloklarına <code>data-takt="0.22 0.44"</code> yazıyorum: blok bölümün %22'sinde görünüyor, %44'ünde kayboluyor. Kamera keyframe'leri de aynı birimle yazıldığı için metinle kamerayı ayrıca senkronlamam gerekmedi.</li>
+        <li>Keyframe'ler <code>[T, değer]</code> çiftleri, aralarını monoton kübik interpolasyonla dolduruyorum. Böylece kamera hedefi geçip geri dönmüyor, keyframe'lerde de durup kalkmıyor.</li>
+        <li>Sen okurken kamera duruyor, iki bölümün arasında hareket ediyor.</li>
+        <li>Scroll, Lenis ve metin animasyonu tek bir <code>requestAnimationFrame</code> döngüsünde dönüyor. 3D sahnenin kendi render döngüsü var ama aynı ortak durumu okuyor. React her karede yeniden render etmiyor.</li>
       </ul>
-      <p>Bir sayfanın bütün koreografisi tek dosyada duruyor: <code>partitur.ts</code>. Yeni bölüm eklemek veri değişikliği; shader'a dokunmuyorsun.</p>
+      <p>Bir sayfanın bütün koreografisi <code>partitur.ts</code> adlı tek bir dosyada. Yeni bölüm eklemek istediğinde oraya veri ekliyorsun, shader'a dokunman gerekmiyor.</p>
     </div>
 
     <div class="sutun2">
       <div>
         <h2>Teknik taraf</h2>
         <ul>
-          <li><strong>Next.js 16</strong>, static export. GitHub Pages ya da herhangi bir statik host.</li>
-          <li><strong>three.js + React Three Fiber.</strong> GSAP ve ScrollTrigger yok.</li>
-          <li><strong>Model dosyası yok.</strong> Türbin kanadı loft edilmiş yüzey, santraller birleştirilmiş geometri, direkler tek <code>InstancedMesh</code>, kablolar tek <code>LineSegments</code>.</li>
-          <li><strong>Metin HTML'de.</strong> SEO ve ekran okuyucu her cümleyi görür. WebGL yoksa gradyan gökyüzü kalır.</li>
-          <li><strong>Erişilebilirlik:</strong> <code>prefers-reduced-motion</code> açıksa yumuşatma kapanır.</li>
-          <li><strong>Ölçerek ilerle:</strong> fps, kamera hızı ve ekrandaki geri kayma headless tarayıcıyla ölçülüyor.</li>
+          <li><strong>Next.js 16</strong>, static export. Çıktı düz HTML ve JS; şu an GitHub Pages'te duruyor, istediğin statik host'a koyabilirsin.</li>
+          <li><strong>three.js ile React Three Fiber.</strong> GSAP ya da ScrollTrigger kullanmadım.</li>
+          <li><strong>Hiç model dosyası yok.</strong> Türbin kanadı loft edilmiş bir yüzey, santraller birleştirilmiş geometri, elektrik direkleri tek bir <code>InstancedMesh</code>, kablolar tek bir <code>LineSegments</code>. İndirilecek 3D dosya sıfır.</li>
+          <li><strong>Metinler HTML'de.</strong> Arama motorları ve ekran okuyucular her cümleyi görüyor. Tarayıcı WebGL desteklemiyorsa arkada gradyan bir gökyüzü kalıyor, metin yine okunuyor.</li>
+          <li><strong>Hareket azaltma:</strong> <code>prefers-reduced-motion</code> açıksa yumuşatma kapanıyor.</li>
+          <li><strong>Ölçüm:</strong> fps'i, kameranın hızını ve ekranda bir şeyin geri kayıp kaymadığını headless tarayıcıyla ölçüyorum. Nasıl yaptığım 03'te.</li>
         </ul>
       </div>
       <div>
         <h2>Art direction</h2>
         <ul>
-          <li><strong>Renk saatten gelir.</strong> Şafak, akşam ve gece sahneleri öğlen ışığından daha çok şey söylüyor. Soluk, beyaz öğle sahnelerini azalt.</li>
-          <li><strong>Gerçekçi değil, maket.</strong> Açık, sıcak yüzeyler ve her nesnede tek bir vurgu rengi. Vurgu, metnin anlattığı parçayı işaret ediyor.</li>
-          <li><strong>Tipografi tek aile.</strong> Başlıklar dar ve ağır, etiketler küçük ve aralıklı. Altta sabit bir HUD sahnenin kendi ölçülerini gösteriyor: saat, rotor devri, bölüm.</li>
-          <li><strong>Hareket bir şey anlatır ya da yoktur.</strong> Zıplama, keyfi zoom, geri scroll'da kaybolan efekt yok.</li>
+          <li><strong>Renkler saatten geliyor.</strong> Şafak, akşam ve gece sahneleri öğlen ışığından çok daha iyi duruyor. O yüzden soluk, beyaz öğlen sahnelerini az tuttum.</li>
+          <li><strong>Maket gibi dursun istedim.</strong> Gerçekçi render peşinde değildim: açık, sıcak yüzeyler ve her nesnede tek bir vurgu rengi. Vurgu da metnin o an anlattığı parçada oluyor.</li>
+          <li><strong>Tek font ailesi.</strong> Başlıklar dar ve kalın, etiketler küçük ve harf aralığı açık. Altta sabit bir HUD sahnenin değerlerini gösteriyor: saat, rotor devri, bölüm.</li>
+          <li><strong>Gereksiz hareket koymadım.</strong> Zıplayan öğe, sebepsiz zoom, geri scroll'da kaybolan efekt yok.</li>
         </ul>
       </div>
     </div>
 
     <div class="okuma" style="margin-left:0">
       <h2>Kendi siteni kurmak</h2>
-      <p>Her adımdan sonra dur ve sonucu kontrol et. AI ile çalışırken en sık hata, onay vermediğin kararların kodun içinde sessizce verilmesi.</p>
+      <p>Ben bunu Claude Code ile faz faz ilerleyerek yaptım. Her fazdan sonra durup sonuca bakmanı öneririm. AI ile çalışırken en sık olan şey, senin onaylamadığın kararların kodun içine sessizce girmesi.</p>
       <ol class="adimlar">
-        <li><div><b>Ekseni bul.</b> İçeriğinden çıkan bir zaman ya da yolculuk seç: bir gün, bir ürünün ömrü, bir üretim hattı. <span class="ref"><a href="#strateji">01</a></span></div></li>
-        <li><div><b>Partisyonu yaz, kod yazma.</b> Her bölüm için saat, yükseklik, metin blokları ve kamera. <span class="ref"><a href="#promptlar">02 · Faz 1</a></span></div></li>
-        <li><div><b>İskeleti kur.</b> Sticky bölümler, akan <code>T</code>, boş sahne. <span class="ref"><a href="#promptlar">02 · Faz 2</a></span></div></li>
-        <li><div><b>Nesneni üret.</b> Prosedürel ya da kendi modelin; her parça ayrı animasyonlanabilsin. <span class="ref"><a href="#promptlar">02</a> · <a href="#tricks">03</a></span></div></li>
-        <li><div><b>Koreografiyi yaz.</b> Kamera, ışık ve sahne durumları <code>partitur.ts</code>'e. <span class="ref"><a href="#tricks">03</a></span></div></li>
-        <li><div><b>Cilala ve ölç.</b> Dikey ekran, reduced-motion, ilk görünümde takılma, kameranın git-gel yapması. <span class="ref"><a href="#tricks">03</a></span></div></li>
-        <li><div><b>Alt sayfaları ekle.</b> Aynı sahne, sayfa başına kendi partisyonu. <span class="ref"><a href="#sayfa-api">04</a></span></div></li>
+        <li><div><b>Bir eksen seç.</b> İçeriğinden çıkan bir zaman ya da yolculuk olsun: bir gün, bir ürünün ömrü, bir üretim hattı. <span class="ref"><a href="#strateji">01</a></span></div></li>
+        <li><div><b>Önce partisyonu yaz, koda sonra geç.</b> Her bölüm için saat, yükseklik, metin blokları ve kamera. <span class="ref"><a href="#promptlar">02 · Faz 1</a></span></div></li>
+        <li><div><b>İskeleti kur.</b> Sticky bölümler, akan <code>T</code> ve boş bir sahne. <span class="ref"><a href="#promptlar">02 · Faz 2</a></span></div></li>
+        <li><div><b>Nesneni üret.</b> Prosedürel olabilir, kendi modelin de olabilir. Önemli olan her parçayı ayrı ayrı oynatabilmen. <span class="ref"><a href="#promptlar">02</a> · <a href="#tricks">03</a></span></div></li>
+        <li><div><b>Koreografiyi yaz.</b> Kamera, ışık ve sahne durumları <code>partitur.ts</code>'e gidiyor. <span class="ref"><a href="#tricks">03</a></span></div></li>
+        <li><div><b>Cilala ve ölç.</b> Dikey ekran, reduced-motion, ilk açılıştaki takılma, kameranın git-gel yapması. <span class="ref"><a href="#tricks">03</a></span></div></li>
+        <li><div><b>Alt sayfaları ekle.</b> Sahne aynı kalıyor, her sayfanın kendi partisyonu oluyor. <span class="ref"><a href="#sayfa-api">04</a></span></div></li>
       </ol>
-      <p>Repoyu doğrudan forklamak daha hızlı:</p>
+      <p>Sıfırdan başlamak istemiyorsan repoyu forkla, çok daha hızlı:</p>
 <pre><code>git clone https://github.com/omerfarukdemiral/3d-immersive
 cd 3d-immersive
 npm install
 npm run dev</code></pre>
-      <p>Firma bilgileri <code>src/content/site.ts</code>'te, ana sayfa metni <code>src/app/(site)/_start/Kapitelfolge.tsx</code>'te, koreografi <code>src/app/(site)/_start/partitur.ts</code>'te.</p>
+      <p>Firma bilgilerini <code>src/content/site.ts</code>'te, ana sayfa metnini <code>src/app/(site)/_start/Kapitelfolge.tsx</code>'te, koreografiyi <code>src/app/(site)/_start/partitur.ts</code>'te değiştiriyorsun.</p>
 
       <h2>Dokümanlar</h2>
     </div>
     <div class="dosyalar">
-      <a href="#strateji"><span>01-strateji.md</span><b>Strateji</b><p>Fikir, mimari ve neden böyle kurulduğu.</p></a>
-      <a href="#promptlar"><span>02-promptlar.md</span><b>Promptlar</b><p>Faz faz Claude Code promptları ve prosedürel model promptları.</p></a>
-      <a href="#tricks"><span>03-tricks.md</span><b>Trick'ler</b><p>40 Three.js, scroll ve performans çözümü; her biri dosya adıyla.</p></a>
+      <a href="#strateji"><span>01-strateji.md</span><b>Strateji</b><p>Fikir, mimari ve neden böyle kurduğum.</p></a>
+      <a href="#promptlar"><span>02-promptlar.md</span><b>Promptlar</b><p>Faz faz kullandığım Claude Code promptları ve prosedürel model promptları.</p></a>
+      <a href="#tricks"><span>03-tricks.md</span><b>Trick'ler</b><p>Yol boyunca çözdüğüm 40 Three.js, scroll ve performans sorunu, her biri dosya adıyla.</p></a>
       <a href="#sayfa-api"><span>04-sayfa-api.md</span><b>Sayfa API'si</b><p>Aynı sahneye yeni bir alt sayfa eklemek.</p></a>
     </div>
   </section>
