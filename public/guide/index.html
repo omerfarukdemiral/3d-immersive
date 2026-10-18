@@ -431,8 +431,9 @@ birleşimi (<code>mergeGeometries</code>).</li>
 </ul>
 <p>Sonuç: model indirme 0 MB, her parça ayrı animasyonlanabilir.</p>
 <h2 id="strateji-6-bagimlilik-disiplini">6. Bağımlılık disiplini</h2>
-<p>GSAP yok, ScrollTrigger yok. Tek <code>requestAnimationFrame</code> döngüsü;
-smooth scroll için Lenis var ama <strong>kendi rAF&#39;i kapalı</strong>, aynı döngünün
+<p>GSAP yok, ScrollTrigger yok. Scroll ve metin tek bir
+<code>requestAnimationFrame</code> döngüsünde; 3D sahne R3F&#39;in kendi render
+döngüsünde çizilir ve aynı ortak durumu okur. Smooth scroll için Lenis var ama <strong>kendi rAF&#39;i kapalı</strong>, aynı döngünün
 başında sürülüyor (ilk sürümde Lenis yoktu ve mouse tekerleğinde metin
 ile sahne kopuyordu — bkz. <a href="#tricks"><code>03-tricks.md</code></a> #1). React bu döngüde
 <strong>render etmez</strong>;

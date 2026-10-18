@@ -94,8 +94,9 @@ Sonuç: model indirme 0 MB, her parça ayrı animasyonlanabilir.
 
 ## 6. Bağımlılık disiplini
 
-GSAP yok, ScrollTrigger yok. Tek `requestAnimationFrame` döngüsü;
-smooth scroll için Lenis var ama **kendi rAF'i kapalı**, aynı döngünün
+GSAP yok, ScrollTrigger yok. Scroll ve metin tek bir
+`requestAnimationFrame` döngüsünde; 3D sahne R3F'in kendi render
+döngüsünde çizilir ve aynı ortak durumu okur. Smooth scroll için Lenis var ama **kendi rAF'i kapalı**, aynı döngünün
 başında sürülüyor (ilk sürümde Lenis yoktu ve mouse tekerleğinde metin
 ile sahne kopuyordu — bkz. `03-tricks.md` #1). React bu döngüde
 **render etmez**;

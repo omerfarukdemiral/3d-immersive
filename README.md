@@ -23,7 +23,7 @@ tamamen kodla üretiliyor. Model indirme: 0 MB.
 |---|---|
 | Framework | Next.js 16 (App Router, static export) |
 | 3D | three.js + React Three Fiber |
-| Animasyon | Tek `requestAnimationFrame` döngüsü + Lenis (aynı döngüden sürülüyor), GSAP yok |
+| Animasyon | Scroll ve metin için tek `requestAnimationFrame` döngüsü + Lenis (aynı döngüden sürülüyor), GSAP yok |
 | Stil | Tailwind 4 + düz CSS |
 | Yayın | GitHub Pages (`.github/workflows/pages.yml`) |
 
